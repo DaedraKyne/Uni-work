@@ -1,0 +1,4 @@
+- git add FILENAME
+- git commit
+- git remote add origin URL
+- git remote -v
