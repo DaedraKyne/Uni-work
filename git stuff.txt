@@ -3,3 +3,4 @@
 - git remote add origin URL
 - git remote -v
 - git push origin master
+- git pull origin master
