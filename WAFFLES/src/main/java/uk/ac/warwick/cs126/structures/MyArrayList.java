@@ -106,7 +106,7 @@ public class MyArrayList<E> {
         return replaced;
     }
 
-    public E[] toArray() {
+    public Object[] toArray() {
         return this.array;
     }
 

@@ -81,7 +81,7 @@ public class CustomerStore implements ICustomerStore {
 
     public boolean addCustomer(Customer customer) {
         // DONE
-        if (costumer != null) {
+        if (customer != null) {
             customerArray.add(customer);
             return true;
         }
@@ -103,12 +103,16 @@ public class CustomerStore implements ICustomerStore {
 
     public Customer getCustomer(Long id) {
         // DONE
-        return customerArray.get((int)id);;
+        return customerArray.get(id.intValue());
     }
 
     public Customer[] getCustomers() {
         // DONE
-        Customer[] arr = sortByID(customerArray.toArray());
+        Customer[] arr = new Customer[customerArray.size()];
+        for (int i = 0; i < customerArray.size(); i++) {
+            arr[i] = customerArray.get(i);
+        }
+        arr = sortByID(arr);
         return arr;
     }
 
@@ -120,7 +124,12 @@ public class CustomerStore implements ICustomerStore {
 
     public Customer[] getCustomersByName() {
         // DONE
-        Customer[] arr = sortByName(customerArray.toArray());
+        Customer[] arr = new Customer[customerArray.size()];
+        for (int i = 0; i < customerArray.size(); i++) {
+            arr[i] = customerArray.get(i);
+        }
+        arr = sortByName(arr);
+        return arr;
     }
 
     public Customer[] getCustomersByName(Customer[] customers) {
@@ -131,11 +140,41 @@ public class CustomerStore implements ICustomerStore {
 
     public Customer[] getCustomersContaining(String searchTerm) {
         // TODO
-        String searchTermConverted = stringFormatter.convertAccents(searchTerm);
+        if (searchTerm.isEmpty()) {
+            return new Customer[0];
+        }
+        while (searchTerm.charAt(0) == ' ') {searchTerm = searchTerm.substring(1);}
+        while (searchTerm.charAt(searchTerm.length() - 1) == ' ') {
+            searchTerm = searchTerm.substring(0, searchTerm.length() - 2);
+        }
+        for (int i = 0; i < searchTerm.length() - 1; i++) {
+            if (searchTerm.charAt(i) == ' ' && searchTerm.charAt(i+1) == ' ') {
+                searchTerm = searchTerm.substring(0, i) + searchTerm.substring(i+1);
+            }
+        }
+        String searchTermConverted = StringFormatter.convertAccents(searchTerm);
+        searchTermConverted = searchTermConverted.toLowerCase();
         // String searchTermConvertedFaster = stringFormatter.convertAccentsFaster(searchTerm);
         Customer[] arr = new Customer[customerArray.size()];
-        
-        return new Customer[0];
+        int found = 0;
+        Customer customer;
+        for (int i = 0; i < customerArray.size(); i++) {
+            customer = customerArray.get(i);
+            String customer_name = customer.getFirstName() + " " + customer.getLastName();
+            customer_name = StringFormatter.convertAccents(customer_name);
+            customer_name = customer_name.toLowerCase();
+            for (int i2 = 0; i2 < customer_name.length() - searchTermConverted.length(); i2++) {
+                if (customer_name.substring(i2, i2 + searchTermConverted.length()).equals(searchTermConverted)) {
+                    arr[found++] = customer;
+                }
+            }
+        }
+        Customer[] arr1 = new Customer[found];
+        for (int i = 0; i < found; i++) {
+            arr1[i] = arr[i];
+        }
+        arr1 = getCustomersByName(arr1);
+        return arr1;
     }
 
     //ADDED FUNCTIONS
@@ -144,7 +183,7 @@ public class CustomerStore implements ICustomerStore {
         Customer temp;
         Customer[] arr = customers.clone();
         for (int i = 0; i < arr.length; i++) {
-            for (int i2 = 0; i < arr.length - i; i++) {
+            for (int i2 = i; i2 < arr.length; i2++) {
                 if (arr[i2].getID() < arr[i].getID()) {
                     temp = arr[i];
                     arr[i] = arr[i2];
@@ -157,16 +196,17 @@ public class CustomerStore implements ICustomerStore {
     }
 
     public Customer[] sortByName(Customer[] customers) {
+        System.out.println("Sorting by name!");
         Customer temp;
         Customer[] arr = customers.clone();
         int compare;
         for (int i = 0; i < arr.length; i++) {
-            for (int i2 = 0; i < arr.length - i; i++) {
-                compare = arr[i2].getLastName().compareTo(arr[i].getLastName());
+            for (int i2 = i; i2 < arr.length; i2++) {
+                compare = arr[i2].getLastName().toUpperCase().compareTo(arr[i].getLastName().toUpperCase());
                 if (compare == 0) {
-                    compare = arr[i2].getFirstName().compareTo(arr[i].getFirstName());
+                    compare = arr[i2].getFirstName().toUpperCase().compareTo(arr[i].getFirstName().toUpperCase());
                     if (compare == 0) {
-                        compare = arr[i2].getID() - arr[i].getID();
+                        compare = ((Long)(arr[i2].getID() - arr[i].getID())).intValue();
                     }
                 }
                 if (compare < 0) {
