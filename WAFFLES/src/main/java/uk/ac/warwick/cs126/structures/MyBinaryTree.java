@@ -54,11 +54,17 @@ public class MyBinaryTree<E extends Comparable<E>, T> {
     protected MyNode<E, T> getRoot() {
         return root;
     }
+    protected MyNode<E, T> setRoot(MyNode<E, T> root) {
+        MyNode<E, T> node = this.root;
+        this.root = root;
+        return node;
+    }
 
     protected int getHeight(MyNode<E, T> node) {
         if (node == null) {return 0;}
+        if (node.getLeft() == null && node.getRight() == null) {return 1;}
         else {
-            return getHeight(node.getLeft()) + getHeight(node.getRight());
+            return 1 + Math.max(getHeight(node.getLeft()), getHeight(node.getRight()));
         }
     }
 
