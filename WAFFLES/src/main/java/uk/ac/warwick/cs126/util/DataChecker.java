@@ -18,6 +18,7 @@ public class DataChecker implements IDataChecker {
 
     public Long extractTrueID(String[] repeatedID) {
         // DONE
+        System.out.println("extracting");
         if (repeatedID.length != 3) {
             return null;
         }
@@ -35,6 +36,7 @@ public class DataChecker implements IDataChecker {
 
     public boolean isValid(Long inputID) {
         // DONE
+        System.out.println("validating");
         if (inputID == null) {
             return false;
         }

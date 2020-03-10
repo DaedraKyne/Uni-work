@@ -1520,6 +1520,7 @@ public class StringFormatter {
 
     static {
         // Initialise things here
+        System.out.println("STUCK IN A LOOP! :D");
         for (int i = 0; i < accentAndConvertedAccent.length; i++) {
             if (!(  i == 1429 || i == 1444
                 || (i <= 1462 && i >= 1452)
@@ -1546,7 +1547,10 @@ public class StringFormatter {
     }
 
     public static String convertAccentsFaster(String str) {
-        // TODO
+        // DONE
+        if (str == null || str.equals("")){
+            return "";
+        }
         for (int i = 0; i < str.length(); i++) {
             char c = str.charAt(i);
             //MyArrayList<String[]> equal_strs = accentTree.getData((int)c);

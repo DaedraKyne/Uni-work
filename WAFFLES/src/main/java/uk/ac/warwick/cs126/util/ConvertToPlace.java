@@ -2,6 +2,7 @@ package uk.ac.warwick.cs126.util;
 
 import uk.ac.warwick.cs126.interfaces.IConvertToPlace;
 import uk.ac.warwick.cs126.models.Place;
+import uk.ac.warwick.cs126.structures.MyArrayList;
 import uk.ac.warwick.cs126.structures.MyAvlTree;
 
 import java.io.*;
@@ -12,20 +13,45 @@ import org.apache.commons.io.IOUtils;
 
 public class ConvertToPlace implements IConvertToPlace {
 
+    private MyAvlTree<Float, MyArrayList<Place>> placesTree;
+
     public ConvertToPlace() {
+        System.out.println("\n\nInstantiating");
         // Initialise things here
-        
+        placesTree = new MyAvlTree<Float, MyArrayList<Place>>();
+        Place[] places = getPlacesArray();
+        System.out.println("Looping times: " + places.length);
+        MyArrayList<Place> equal_places;
+        for (int i = 0; i < places.length; i++) {
+            if (i % 1000 == 0) {
+                System.out.println(i);
+            }
+            Place place = places[i];
+            equal_places = placesTree.getData(place.getLatitude());
+            if (equal_places == null) {
+                equal_places = new MyArrayList<Place>();
+                equal_places.add(place);
+                placesTree.add(place.getLatitude(), equal_places);
+            }
+            else {
+                equal_places.add(place);
+                placesTree.setData(place.getLatitude(), equal_places);
+            }
+        }
     }
 
     public Place convert(float latitude, float longitude) {
         // TODO
-        Place[] places = getPlacesArray();
-        for (Place place : places) {
-            if (place.getLatitude() == latitude && place.getLongitude() == longitude) {
-                return place;
+        System.out.print("\n\nCONVERTING");
+        MyArrayList<Place> equal_places = placesTree.getData(latitude);
+        if (equal_places != null) {
+            for (int i = 0; i < equal_places.size(); i++) {
+                System.out.println("Checking in array list");
+                if (equal_places.get(i).getLongitude() == longitude) {
+                    return equal_places.get(i);
+                }
             }
-        }
-
+        } 
         return new Place("", "", 0.0f, 0.0f);
     }
 

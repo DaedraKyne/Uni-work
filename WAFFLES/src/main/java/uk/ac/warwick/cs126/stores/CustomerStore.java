@@ -156,6 +156,7 @@ public class CustomerStore implements ICustomerStore {
 
     public Customer[] getCustomersByName() {
         // DONE
+        System.out.println("loadeing....");
         Customer[] arr = new Customer[customerArray.size()];
         for (int i = 0; i < customerArray.size(); i++) {
             arr[i] = customerArray.get(i);
@@ -184,7 +185,7 @@ public class CustomerStore implements ICustomerStore {
                 searchTerm = searchTerm.substring(0, i) + searchTerm.substring(i+1);
             }
         }
-        String searchTermConverted = StringFormatter.convertAccentsFaster(searchTerm);
+        String searchTermConverted = StringFormatter.convertAccents(searchTerm);
         searchTermConverted = searchTermConverted.toLowerCase();
         Customer[] arr = new Customer[customerArray.size()];
         int found = 0;
