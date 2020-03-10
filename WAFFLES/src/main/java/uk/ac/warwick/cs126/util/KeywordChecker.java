@@ -92,8 +92,23 @@ public class KeywordChecker implements IKeywordChecker {
         // Initialise things here
     }
 
-    public boolean isAKeyword(String word) {
+    public boolean isAKeyword(String word) { //binary search!
         // TODO
+        int left = 0;
+        int right = keywords.length - 1;
+        int mid = -1;
+        int compare;
+        while (mid != right) {
+          mid = ((int) Math.floor((right + left) / 2));
+          compare = word.compareTo(keywords[mid]);
+          if (compare < 0) {
+            right = mid - 1;
+          } else if (compare > 0) {
+            left = mid + 1;
+          } else {
+            return true;
+          }
+        }
         return false;
     }
 }

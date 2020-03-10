@@ -1,6 +1,37 @@
 package uk.ac.warwick.cs126.util;
 
+import uk.ac.warwick.cs126.structures.MyArrayList;
+import uk.ac.warwick.cs126.structures.MyAvlTree;
+
 public class StringFormatter {
+    private static MyAvlTree<Integer, MyArrayList<String[]>> accentTree = new MyAvlTree<Integer, MyArrayList<String[]>>();
+    private static Object[] hashMapConverts = new Object[500];
+    private static final String[][] multiCharConverts = {
+        {"℡", "TEL"},
+        {"℻", "FAX"},
+        {"Ⅱ", "II"},
+        {"Ⅲ", "III"},
+        {"Ⅳ", "IV"},
+        {"Ⅴ", "V"},
+        {"Ⅵ", "VI"},
+        {"Ⅶ", "VII"},
+        {"Ⅷ", "VIII"},
+        {"Ⅸ", "IX"},
+        {"Ⅹ", "X"},
+        {"Ⅺ", "XI"},
+        {"Ⅻ", "XII"},
+        {"ⅱ", "ii"},
+        {"ⅲ", "iii"},
+        {"ⅳ", "iv"},
+        {"ⅴ", "v"},
+        {"ⅵ", "vi"},
+        {"ⅶ", "vii"},
+        {"ⅷ", "viii"},
+        {"ⅸ", "ix"},
+        {"ⅹ", "x"},
+        {"ⅺ", "xi"},
+        {"ⅻ", "xii"}
+    };
     private static final String[][] accentAndConvertedAccent = {
         {"§", "SS"},
         {"ª", "a"},
@@ -1489,18 +1520,56 @@ public class StringFormatter {
 
     static {
         // Initialise things here
+        for (int i = 0; i < accentAndConvertedAccent.length; i++) {
+            if (!(  i == 1429 || i == 1444
+                || (i <= 1462 && i >= 1452)
+                || (i <= 1478 && i >= 1468)
+            )) {
+                String[] str = accentAndConvertedAccent[i];
+                int code = str[0].charAt(0) % 500;
+                //MyArrayList<String[]> equal_strs = accentTree.getData(code);
+                @SuppressWarnings("unchecked")
+                MyArrayList<String[]> equal_strs = (MyArrayList<String[]>) hashMapConverts[code];
+                if (equal_strs == null) {
+                    equal_strs = new MyArrayList<String[]>();
+                    equal_strs.add(str);
+                    //accentTree.add(code, equal_strs);
+                    hashMapConverts[code] = equal_strs;
+                }
+                else {
+                    equal_strs.add(str);
+                    //accentTree.setData(code, equal_strs);
+                    hashMapConverts[code] = equal_strs;
+                }
+            }
+        }
     }
 
     public static String convertAccentsFaster(String str) {
         // TODO
-        return "";
+        for (int i = 0; i < str.length(); i++) {
+            char c = str.charAt(i);
+            //MyArrayList<String[]> equal_strs = accentTree.getData((int)c);
+            @SuppressWarnings("unchecked")
+            MyArrayList<String[]> equal_strs = (MyArrayList<String[]>) hashMapConverts[c % 500];
+            if (equal_strs != null) {
+                for (int i2 = 0; i2 < equal_strs.size(); i2++) {
+                    if (equal_strs.get(i2)[0].equals(str.substring(i, i+1))) {
+                        str = str.substring(0, i) + equal_strs.get(i2)[1] + str.substring(i+1);
+                    }
+                }
+            }
+        }
+        for (String[] strs : multiCharConverts) {
+            str = str.replace(strs[0], strs[1]);
+        }
+        return str;
     }
 
     public static String convertAccents(String str) {
         if (str == null || str.equals("")){
             return "";
         }
-
         String replacedString = str;
         for (int i = 0; i < accentAndConvertedAccent.length; i++) {
             replacedString = replacedString.replace(accentAndConvertedAccent[i][0],

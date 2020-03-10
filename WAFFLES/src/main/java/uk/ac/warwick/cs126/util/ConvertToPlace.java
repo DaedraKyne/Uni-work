@@ -2,6 +2,7 @@ package uk.ac.warwick.cs126.util;
 
 import uk.ac.warwick.cs126.interfaces.IConvertToPlace;
 import uk.ac.warwick.cs126.models.Place;
+import uk.ac.warwick.cs126.structures.MyAvlTree;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -13,10 +14,18 @@ public class ConvertToPlace implements IConvertToPlace {
 
     public ConvertToPlace() {
         // Initialise things here
+        
     }
 
     public Place convert(float latitude, float longitude) {
         // TODO
+        Place[] places = getPlacesArray();
+        for (Place place : places) {
+            if (place.getLatitude() == latitude && place.getLongitude() == longitude) {
+                return place;
+            }
+        }
+
         return new Place("", "", 0.0f, 0.0f);
     }
 

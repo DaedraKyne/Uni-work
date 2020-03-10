@@ -11,7 +11,8 @@ import java.text.SimpleDateFormat;
 import org.apache.commons.io.IOUtils;
 
 import uk.ac.warwick.cs126.structures.MyArrayList;
-
+import uk.ac.warwick.cs126.structures.MyAvlTree;
+import uk.ac.warwick.cs126.structures.MyBinaryTree;
 import uk.ac.warwick.cs126.util.DataChecker;
 import uk.ac.warwick.cs126.util.StringFormatter;
 
@@ -20,10 +21,15 @@ public class CustomerStore implements ICustomerStore {
     private MyArrayList<Customer> customerArray;
     private DataChecker dataChecker;
 
+    private MyAvlTree<Long, Customer> idSortedCustomerArray;
+    private MyAvlTree<String, Customer> nameSortedCustomerArray;
+
     public CustomerStore() {
         // Initialise variables here
         customerArray = new MyArrayList<>();
         dataChecker = new DataChecker();
+        idSortedCustomerArray = new MyAvlTree<Long, Customer>();
+        nameSortedCustomerArray = new MyAvlTree<String, Customer>();
     }
 
     public Customer[] loadCustomerDataToArray(InputStream resource) {
@@ -83,6 +89,7 @@ public class CustomerStore implements ICustomerStore {
         // DONE
         if (customer != null) {
             customerArray.add(customer);
+            idSortedCustomerArray.add(customer.getID(), customer);
             return true;
         }
         return false;
@@ -90,36 +97,61 @@ public class CustomerStore implements ICustomerStore {
 
     public boolean addCustomer(Customer[] customers) {
         // DONE
-        for (Customer customer : customers) {
-            if (customer != null) {
-                customerArray.add(customer);
+        if (customers != null) {
+            for (Customer customer : customers) {
+                if (customer != null) {
+                    customerArray.add(customer);
+                    idSortedCustomerArray.add(customer.getID(), customer);
+                }
+                else {
+                    return false;
+                }
             }
-            else {
-                return false;
-            }
+            return true;    
         }
-        return true;
+        return false;
     }
 
     public Customer getCustomer(Long id) {
         // DONE
-        return customerArray.get(id.intValue());
+        if (id != null) {
+            return idSortedCustomerArray.getData(id);
+        }
+        return null;
     }
 
     public Customer[] getCustomers() {
         // DONE
-        Customer[] arr = new Customer[customerArray.size()];
+        /*Customer[] arr = new Customer[customerArray.size()];
         for (int i = 0; i < customerArray.size(); i++) {
             arr[i] = customerArray.get(i);
         }
         arr = sortByID(arr);
+        return arr;*/
+        Customer[] arr = new Customer[idSortedCustomerArray.size()];
+        int i = 0;
+        for (Customer customer : idSortedCustomerArray) {
+            arr[i++] = customer;
+        }
         return arr;
     }
 
     public Customer[] getCustomers(Customer[] customers) {
         // DONE
-        Customer[] arr = sortByID(customers);
-        return arr;
+        //Customer[] arr = sortByID(customers);
+        if (customers != null) {
+            Customer[] arr = new Customer[customers.length];
+            MyAvlTree<Long, Customer> custom_tree = new MyAvlTree<Long, Customer>();
+            for (Customer customer : customers) {
+                custom_tree.add(customer.getID(), customer);
+            }
+            int i = 0;
+            for (Customer customer : custom_tree) {
+                arr[i++] = customer;
+            }
+            return arr;    
+        }
+        return new Customer[0];
     }
 
     public Customer[] getCustomersByName() {
@@ -152,9 +184,8 @@ public class CustomerStore implements ICustomerStore {
                 searchTerm = searchTerm.substring(0, i) + searchTerm.substring(i+1);
             }
         }
-        String searchTermConverted = StringFormatter.convertAccents(searchTerm);
+        String searchTermConverted = StringFormatter.convertAccentsFaster(searchTerm);
         searchTermConverted = searchTermConverted.toLowerCase();
-        // String searchTermConvertedFaster = stringFormatter.convertAccentsFaster(searchTerm);
         Customer[] arr = new Customer[customerArray.size()];
         int found = 0;
         Customer customer;
@@ -166,6 +197,7 @@ public class CustomerStore implements ICustomerStore {
             for (int i2 = 0; i2 < customer_name.length() - searchTermConverted.length(); i2++) {
                 if (customer_name.substring(i2, i2 + searchTermConverted.length()).equals(searchTermConverted)) {
                     arr[found++] = customer;
+                    break; //Once a match has been found for a given customer, move on to next customer
                 }
             }
         }
@@ -180,44 +212,49 @@ public class CustomerStore implements ICustomerStore {
     //ADDED FUNCTIONS
 
     public Customer[] sortByID(Customer[] customers) {
-        Customer temp;
-        Customer[] arr = customers.clone();
-        for (int i = 0; i < arr.length; i++) {
-            for (int i2 = i; i2 < arr.length; i2++) {
-                if (arr[i2].getID() < arr[i].getID()) {
-                    temp = arr[i];
-                    arr[i] = arr[i2];
-                    arr[i2] = temp;
+        if (customers != null) {
+            Customer temp;
+            Customer[] arr = customers.clone();
+            for (int i = 0; i < arr.length; i++) {
+                for (int i2 = i; i2 < arr.length; i2++) {
+                    if (arr[i2].getID() < arr[i].getID()) {
+                        temp = arr[i];
+                        arr[i] = arr[i2];
+                        arr[i2] = temp;
+                    }
                 }
             }
+            return arr;    
         }
-        return arr;
+        return new Customer[0];
 
     }
 
     public Customer[] sortByName(Customer[] customers) {
-        System.out.println("Sorting by name!");
-        Customer temp;
-        Customer[] arr = customers.clone();
-        int compare;
-        for (int i = 0; i < arr.length; i++) {
-            for (int i2 = i; i2 < arr.length; i2++) {
-                compare = arr[i2].getLastName().toUpperCase().compareTo(arr[i].getLastName().toUpperCase());
-                if (compare == 0) {
-                    compare = arr[i2].getFirstName().toUpperCase().compareTo(arr[i].getFirstName().toUpperCase());
+        if (customers != null) {
+            System.out.println("Sorting by name!");
+            Customer temp;
+            Customer[] arr = customers.clone();
+            int compare;
+            for (int i = 0; i < arr.length; i++) {
+                for (int i2 = i+1; i2 < arr.length; i2++) {
+                    compare = arr[i2].getLastName().toUpperCase().compareTo(arr[i].getLastName().toUpperCase());
                     if (compare == 0) {
-                        compare = ((Long)(arr[i2].getID() - arr[i].getID())).intValue();
+                        compare = arr[i2].getFirstName().toUpperCase().compareTo(arr[i].getFirstName().toUpperCase());
+                        if (compare == 0) {
+                            compare = ((Long)(arr[i2].getID() - arr[i].getID())).intValue();
+                        }
+                    }
+                    if (compare < 0) {
+                        temp = arr[i];
+                        arr[i] = arr[i2];
+                        arr[i2] = temp;
                     }
                 }
-                if (compare < 0) {
-                    temp = arr[i];
-                    arr[i] = arr[i2];
-                    arr[i2] = temp;
-                }
             }
+            return arr;    
         }
-        return arr;
-
+        return new Customer[0];
     }
 
 }

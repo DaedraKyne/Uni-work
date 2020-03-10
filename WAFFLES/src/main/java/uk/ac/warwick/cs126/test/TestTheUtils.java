@@ -56,6 +56,7 @@ public class TestTheUtils extends TestRunner {
             if (result) {
                 System.out.println("[SUCCESS]    DataChecker: testDataCheckerOnValidIDAndExtractID()");
             } else {
+                System.out.println("Invalid: " + isInvalid + ", valid: " + isValid + ", True Id: " + trueID);
                 System.out.println(" [FAILED]    DataChecker: testDataCheckerOnValidIDAndExtractID()");
             }
         } catch (Exception e) {
@@ -162,6 +163,7 @@ public class TestTheUtils extends TestRunner {
             if (result) {
                 System.out.println("[SUCCESS]    DataChecker: testDataCheckerOnValidRestaurant()");
             } else {
+                System.out.println("Invalid: " + isInvalid + ", valid: " + isValid);
                 System.out.println(" [FAILED]    DataChecker: testDataCheckerOnValidRestaurant()");
             }
         } catch (Exception e) {
