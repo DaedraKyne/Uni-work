@@ -2,8 +2,6 @@ package uk.ac.warwick.cs126.util;
 
 import uk.ac.warwick.cs126.interfaces.IConvertToPlace;
 import uk.ac.warwick.cs126.models.Place;
-import uk.ac.warwick.cs126.structures.MyArrayList;
-import uk.ac.warwick.cs126.structures.MyAvlTree;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -11,47 +9,45 @@ import java.nio.file.Paths;
 
 import org.apache.commons.io.IOUtils;
 
+import java.lang.Math;
+
 public class ConvertToPlace implements IConvertToPlace {
 
-    private MyAvlTree<Float, MyArrayList<Place>> placesTree;
+    private Place[] places;
+    private int[][] limiter;
 
     public ConvertToPlace() {
-        System.out.println("\n\nInstantiating");
         // Initialise things here
-        placesTree = new MyAvlTree<Float, MyArrayList<Place>>();
-        Place[] places = getPlacesArray();
-        System.out.println("Looping times: " + places.length);
-        MyArrayList<Place> equal_places;
-        for (int i = 0; i < places.length; i++) {
-            if (i % 1000 == 0) {
-                System.out.println(i);
+        places = getPlacesArray();
+        limiter = new int[12][2];
+        int level;
+        Place place;
+        for (int i = 0; i < limiter.length; i++) {
+            limiter[i][0] = 0;
+            limiter[i][1] = 0;
+        }
+        for (int i = 0; i < places.length; i++) {            
+            place = places[i];
+            level = (int) Math.floor(place.getLatitude()) - 49;
+            if (limiter[level][0] == 0) {
+                limiter[level][0] = i;
             }
-            Place place = places[i];
-            equal_places = placesTree.getData(place.getLatitude());
-            if (equal_places == null) {
-                equal_places = new MyArrayList<Place>();
-                equal_places.add(place);
-                placesTree.add(place.getLatitude(), equal_places);
-            }
-            else {
-                equal_places.add(place);
-                placesTree.setData(place.getLatitude(), equal_places);
-            }
+            limiter[level][1] = i;
         }
     }
 
     public Place convert(float latitude, float longitude) {
         // TODO
-        System.out.print("\n\nCONVERTING");
-        MyArrayList<Place> equal_places = placesTree.getData(latitude);
-        if (equal_places != null) {
-            for (int i = 0; i < equal_places.size(); i++) {
-                System.out.println("Checking in array list");
-                if (equal_places.get(i).getLongitude() == longitude) {
-                    return equal_places.get(i);
-                }
+        int level = (int) Math.floor(latitude) - 49;
+        int start = limiter[level][0];
+        int end = limiter[level][1];
+        Place place;
+        for (int i = start; i < end; i++) {
+            place = places[i];
+            if (place.getLatitude() == latitude && place.getLongitude() == longitude) {
+                return place;
             }
-        } 
+        }
         return new Place("", "", 0.0f, 0.0f);
     }
 

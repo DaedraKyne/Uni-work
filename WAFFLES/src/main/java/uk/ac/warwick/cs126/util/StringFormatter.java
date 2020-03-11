@@ -1520,7 +1520,6 @@ public class StringFormatter {
 
     static {
         // Initialise things here
-        System.out.println("STUCK IN A LOOP! :D");
         for (int i = 0; i < accentAndConvertedAccent.length; i++) {
             if (!(  i == 1429 || i == 1444
                 || (i <= 1462 && i >= 1452)
