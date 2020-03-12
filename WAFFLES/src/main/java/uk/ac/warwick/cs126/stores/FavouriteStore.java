@@ -219,7 +219,7 @@ public class FavouriteStore implements IFavouriteStore {
                 fully_added = false;
             }
             i++;
-            if (i % 1000 == 0) {System.out.println(i);}
+            if (i % 100 == 0) {System.out.println(i);}
         }
         return fully_added;
     }

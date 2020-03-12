@@ -147,7 +147,7 @@ public class MyBinaryTree<E extends Comparable<E>, T> implements Iterable<T> {
         if (node == null) {
             return 0;
         } else {
-            int height = 0;
+            /*int height = 0;
             MyArrayList<MyNode<E, T>> node_array= new MyArrayList<MyNode<E, T>>();
             MyArrayList<MyNode<E, T>> temp_node_array;
             node_array.add(node);
@@ -166,7 +166,8 @@ public class MyBinaryTree<E extends Comparable<E>, T> implements Iterable<T> {
                 }
                 node_array = temp_node_array;
             }
-            return height;
+            return height;*/
+            return 1 + getHeight(node.getLeft()) + getHeight(node.getRight());
         }
     }
 
