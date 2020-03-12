@@ -4,7 +4,7 @@ import uk.ac.warwick.cs126.structures.MyArrayList;
 import uk.ac.warwick.cs126.structures.MyAvlTree;
 
 public class StringFormatter {
-    private static MyAvlTree<Integer, MyArrayList<String[]>> accentTree = new MyAvlTree<Integer, MyArrayList<String[]>>();
+    //private static MyAvlTree<Integer, MyArrayList<String[]>> accentTree = new MyAvlTree<Integer, MyArrayList<String[]>>();
     private static Object[] hashMapConverts = new Object[500];
     private static final String[][] multiCharConverts = {
         {"℡", "TEL"},

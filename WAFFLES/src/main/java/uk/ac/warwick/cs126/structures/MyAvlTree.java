@@ -14,6 +14,17 @@ public class MyAvlTree<E extends Comparable<E>, T> extends MyBinaryTree<E, T> {
         restructure(super.getRoot());
     }
 
+    public T remove(E value) {
+        MyNode<E, T> parent = super.getFirstNode(value);
+        if (parent != null) {
+            parent = parent.getParent();
+            T old_data = super.remove(value);
+            rebalance(parent);
+            return old_data;
+        }
+        return null;
+    }
+
     protected void restructure(MyNode<E, T> parent) {
         if (parent != null)  {
             restructure(parent.getLeft());
@@ -78,4 +89,66 @@ public class MyAvlTree<E extends Comparable<E>, T> extends MyBinaryTree<E, T> {
             }
         }
     }
+
+    protected void rebalance(MyNode<E, T> parent) {
+        if (parent != null) {
+            MyNode<E, T> z_ptr = parent;
+            int height_left, height_right, height_diff;
+            while (z_ptr != null) {
+                height_left = super.getHeight(z_ptr.getLeft());
+                height_right = super.getHeight(z_ptr.getRight());
+                height_diff = Math.abs(height_left - height_right);
+                if (height_diff > 1) {
+                    MyNode<E, T> y_ptr = height_left < height_right ?
+                                            z_ptr.getRight() : z_ptr.getLeft();
+                    height_left = super.getHeight(y_ptr.getLeft());
+                    height_right = super.getHeight(y_ptr.getRight());                            
+                    MyNode<E, T> x_ptr = height_left < height_right ?
+                                            y_ptr.getRight() : y_ptr.getLeft();
+                    MyNode<E, T> a, b, c;
+                    if (y_ptr.getSide() == 1) {
+                        c = z_ptr;
+                        if (x_ptr.getSide() == 1) {
+                            a = x_ptr;
+                            b = y_ptr;
+                            c.setLeft(y_ptr.getRight());
+                        } else {
+                            a = y_ptr;
+                            b = x_ptr;
+                            a.setRight(x_ptr.getLeft());
+                            c.setLeft(x_ptr.getRight());
+                        }
+                    } else {
+                        a = z_ptr;
+                        if (x_ptr.getSide() == 1) {
+                            b = x_ptr;
+                            c = y_ptr;
+                            a.setRight(x_ptr.getLeft());
+                            c.setLeft(x_ptr.getRight());
+
+                        } else {
+                            b = y_ptr;
+                            c = x_ptr;
+                            a.setRight(y_ptr.getLeft());
+                        }
+                    }
+                    if (z_ptr.getSide() == 1) {
+                        z_ptr.getParent().setLeft(b);
+                    } else if (z_ptr.getSide() == 2) {
+                        z_ptr.getParent().setRight(b);
+                    } else {
+                        b.setSide(0);
+                        super.setRoot(b);
+                    }
+                    b.setLeft(a);
+                    b.setRight(c);
+                    z_ptr = c;
+
+                }
+                z_ptr = z_ptr.getParent();
+            }
+
+        }
+    }
+
 }

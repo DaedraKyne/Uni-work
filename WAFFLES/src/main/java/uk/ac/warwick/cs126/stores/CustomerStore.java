@@ -22,14 +22,12 @@ public class CustomerStore implements ICustomerStore {
     private DataChecker dataChecker;
 
     private MyAvlTree<Long, Customer> idSortedCustomerArray;
-    private MyAvlTree<String, Customer> nameSortedCustomerArray;
 
     public CustomerStore() {
         // Initialise variables here
         customerArray = new MyArrayList<>();
         dataChecker = new DataChecker();
         idSortedCustomerArray = new MyAvlTree<Long, Customer>();
-        nameSortedCustomerArray = new MyAvlTree<String, Customer>();
     }
 
     public Customer[] loadCustomerDataToArray(InputStream resource) {
@@ -99,13 +97,10 @@ public class CustomerStore implements ICustomerStore {
         // DONE
         if (customers != null) {
             for (Customer customer : customers) {
-                if (customer != null) {
-                    customerArray.add(customer);
-                    idSortedCustomerArray.add(customer.getID(), customer);
-                }
-                else {
+                if (!addCustomer(customer)) {
                     return false;
                 }
+                
             }
             return true;    
         }

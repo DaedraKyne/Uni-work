@@ -39,6 +39,51 @@ public class MyBinaryTree<E extends Comparable<E>, T> implements Iterable<T> {
         }
     }
 
+    public T remove(E value) {
+        MyNode<E, T> node = getFirstNode(value);
+        if (node != null) {
+            int side = node.getSide();
+            MyNode<E, T> ptr;
+            if (node.hasRightChild()) {
+                ptr = node.getRight();
+                ptr = getLeftest(ptr);
+                MyNode<E, T> right = ptr.getRight();
+                if (ptr.getSide() == 1) {
+                    ptr.getParent().setLeft(null);
+                } else if (ptr.getSide() == 2) {
+                    ptr.getParent().setRight(null);
+                }
+                ptr.setLeft(node.getLeft());
+                ptr.setRight(node.getRight());
+                if (side == 1) {
+                    node.getParent().setLeft(ptr);
+                } else if (side == 2) {
+                    node.getParent().setRight(ptr);
+                } else {
+                    ptr.setSide(0);
+                    root = ptr;
+                }
+                if (right != null) {
+                    add(right.getValue(), right.getData());
+                }
+                return node.getData();
+    
+            } else {
+                if (side == 1) {
+                    node.getParent().setLeft(node.getLeft());
+                } else if (side == 2) {
+                    node.getParent().setRight(node.getLeft());
+                } else {
+                    root = null;
+                }
+                return node.getData();
+            }
+
+
+        }
+        return null;
+    }
+
     public T getData(E value) {
         MyNode<E, T> ptr = getFirstNode(value);
         return (ptr != null) ? ptr.getData() : null;
@@ -101,11 +146,56 @@ public class MyBinaryTree<E extends Comparable<E>, T> implements Iterable<T> {
     protected int getHeight(MyNode<E, T> node) {
         if (node == null) {
             return 0;
-        }
-        if (node.getLeft() == null && node.getRight() == null) {
-            return 1;
         } else {
-            return 1 + Math.max(getHeight(node.getLeft()), getHeight(node.getRight()));
+            int height = 0;
+            MyArrayList<MyNode<E, T>> node_array= new MyArrayList<MyNode<E, T>>();
+            MyArrayList<MyNode<E, T>> temp_node_array;
+            node_array.add(node);
+            while (node_array.size() != 0) {
+                height += 1;
+                temp_node_array = new MyArrayList<MyNode<E, T>>();
+                for (int i = 0; i < node_array.size(); i++) {
+                    MyNode<E, T> left = node_array.get(i).getLeft();
+                    MyNode<E, T> right = node_array.get(i).getRight();
+                    if (left != null) {
+                        temp_node_array.add(left);
+                    }
+                    if (right != null) {
+                        temp_node_array.add(right);
+                    }
+                }
+                node_array = temp_node_array;
+            }
+            return height;
+        }
+    }
+
+    protected int getHeight(MyNode<E, T> node, boolean n) {
+        if (node == null) {
+            return 0;
+        } else {
+            int height = 0;
+            MyArrayList<MyNode<E, T>> node_array= new MyArrayList<MyNode<E, T>>();
+            MyArrayList<MyNode<E, T>> temp_node_array;
+            node_array.add(node);
+            System.out.print("a" + node);
+            while (node_array.size() != 0) {
+                System.out.print(height + " ");
+                height += 1;
+                temp_node_array = new MyArrayList<MyNode<E, T>>();
+                for (int i = 0; i < node_array.size(); i++) {
+                    MyNode<E, T> left = node_array.get(i).getLeft();
+                    MyNode<E, T> right = node_array.get(i).getRight();
+                    if (left != null) {
+                        temp_node_array.add(left);
+                    }
+                    if (right != null) {
+                        temp_node_array.add(right);
+                    }
+                }
+                node_array = temp_node_array;
+            }
+            return height;
         }
     }
 

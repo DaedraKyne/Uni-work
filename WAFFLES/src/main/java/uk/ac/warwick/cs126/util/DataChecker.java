@@ -18,7 +18,6 @@ public class DataChecker implements IDataChecker {
 
     public Long extractTrueID(String[] repeatedID) {
         // DONE
-        System.out.println("extracting");
         if (repeatedID.length != 3) {
             return null;
         }
@@ -36,11 +35,11 @@ public class DataChecker implements IDataChecker {
 
     public boolean isValid(Long inputID) {
         // DONE
-        System.out.println("validating");
         if (inputID == null) {
             return false;
         }
         if (inputID.toString().length() != 16) {
+            System.out.println("Id is not long enough, length: " + inputID.toString().length() + ", id: " + inputID);
             return false;
         }
         MyAvlTree<Integer, Integer> tree = new MyAvlTree<Integer, Integer>();
@@ -51,7 +50,6 @@ public class DataChecker implements IDataChecker {
             try {
                 integer = Integer.parseInt(""+c);
             } catch (NumberFormatException e) {
-                System.out.println("Not a number: " + inputID);
                 return false;
             }
             if ((data = tree.getData(integer)) != null) {
