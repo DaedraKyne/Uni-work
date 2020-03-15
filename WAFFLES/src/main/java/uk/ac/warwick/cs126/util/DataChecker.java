@@ -6,6 +6,7 @@ import uk.ac.warwick.cs126.models.Customer;
 import uk.ac.warwick.cs126.models.Restaurant;
 import uk.ac.warwick.cs126.models.Favourite;
 import uk.ac.warwick.cs126.models.Review;
+import uk.ac.warwick.cs126.structures.MyArrayList;
 import uk.ac.warwick.cs126.structures.MyAvlTree;
 
 import java.util.Date;
@@ -42,7 +43,7 @@ public class DataChecker implements IDataChecker {
             System.out.println("Id is not long enough, length: " + inputID.toString().length() + ", id: " + inputID);
             return false;
         }
-        MyAvlTree<Integer, Integer> tree = new MyAvlTree<Integer, Integer>();
+        MyAvlTree<Integer, Integer, MyArrayList<Integer>, MyArrayList<Integer>, MyArrayList<Integer>, Integer> tree = new MyAvlTree<Integer, Integer, MyArrayList<Integer>, MyArrayList<Integer>, MyArrayList<Integer>, Integer>();
         char[] id = Long.toString(inputID).toCharArray();
         Integer data;
         int integer;
@@ -52,13 +53,13 @@ public class DataChecker implements IDataChecker {
             } catch (NumberFormatException e) {
                 return false;
             }
-            if ((data = tree.getData(integer)) != null) {
+            if ((data = tree.getData(integer, null, null, null)) != null) {
                 if (data >= 3) {
                     return false;
                 }
-                tree.setData(integer, data + 1);
+                tree.setData(integer, null, null, null, data + 1);
             } else {
-                tree.add(integer, 1);
+                tree.add(integer, null, null, null, 1);
             }
         }
         return true;

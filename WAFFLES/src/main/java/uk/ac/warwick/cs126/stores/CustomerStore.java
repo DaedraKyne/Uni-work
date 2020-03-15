@@ -21,13 +21,16 @@ public class CustomerStore implements ICustomerStore {
     private MyArrayList<Customer> customerArray;
     private DataChecker dataChecker;
 
-    private MyAvlTree<Long, Customer> idSortedCustomerArray;
+    private MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, Customer> idSortedCustomerArray;
+    private MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, Boolean> idBlacklist;
+    
 
     public CustomerStore() {
         // Initialise variables here
         customerArray = new MyArrayList<>();
         dataChecker = new DataChecker();
-        idSortedCustomerArray = new MyAvlTree<Long, Customer>();
+        idSortedCustomerArray = new MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, Customer>();
+        idBlacklist = new MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, Boolean>();
     }
 
     public Customer[] loadCustomerDataToArray(InputStream resource) {
@@ -85,9 +88,18 @@ public class CustomerStore implements ICustomerStore {
 
     public boolean addCustomer(Customer customer) {
         // DONE
-        if (customer != null) {
+        if (dataChecker.isValid(customer)) {
+            Long customerID = customer.getID();
+            if (idBlacklist.contains(customerID, null, null, null)) {
+                return false;
+            }
+            if (idSortedCustomerArray.contains(customerID, null, null, null)) {
+                idSortedCustomerArray.remove(customerID, null, null, null);
+                idBlacklist.add(customerID, null, null, null, true);
+                return false;
+            }
             customerArray.add(customer);
-            idSortedCustomerArray.add(customer.getID(), customer);
+            idSortedCustomerArray.add(customerID, null, null, null, customer);
             return true;
         }
         return false;
@@ -96,13 +108,14 @@ public class CustomerStore implements ICustomerStore {
     public boolean addCustomer(Customer[] customers) {
         // DONE
         if (customers != null) {
+            boolean fully_added = true;
             for (Customer customer : customers) {
                 if (!addCustomer(customer)) {
-                    return false;
+                    fully_added = false;
                 }
                 
             }
-            return true;    
+            return fully_added;    
         }
         return false;
     }
@@ -110,7 +123,7 @@ public class CustomerStore implements ICustomerStore {
     public Customer getCustomer(Long id) {
         // DONE
         if (id != null) {
-            return idSortedCustomerArray.getData(id);
+            return idSortedCustomerArray.getData(id, null, null, null);
         }
         return null;
     }
@@ -136,9 +149,9 @@ public class CustomerStore implements ICustomerStore {
         //Customer[] arr = sortByID(customers);
         if (customers != null) {
             Customer[] arr = new Customer[customers.length];
-            MyAvlTree<Long, Customer> custom_tree = new MyAvlTree<Long, Customer>();
+            MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, Customer> custom_tree = new MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, Customer>();
             for (Customer customer : customers) {
-                custom_tree.add(customer.getID(), customer);
+                custom_tree.add(customer.getID(), null, null, null, customer);
             }
             int i = 0;
             for (Customer customer : custom_tree) {
@@ -170,11 +183,13 @@ public class CustomerStore implements ICustomerStore {
         if (searchTerm.isEmpty()) {
             return new Customer[0];
         }
-        while (searchTerm.charAt(0) == ' ') {searchTerm = searchTerm.substring(1);}
-        while (searchTerm.charAt(searchTerm.length() - 1) == ' ') {
-            searchTerm = searchTerm.substring(0, searchTerm.length() - 2);
-        }
-        for (int i = 0; i < searchTerm.length() - 1; i++) {
+        int i = 0;
+        while (searchTerm.charAt(i) == ' ') {i++;}
+        searchTerm = searchTerm.substring(i);
+        i = 1;
+        while (searchTerm.charAt(searchTerm.length() - i) == ' ') {i++;}
+        searchTerm = searchTerm.substring(0, searchTerm.length() - i + 1);
+        for (i = 0; i < searchTerm.length() - 1; i++) {
             if (searchTerm.charAt(i) == ' ' && searchTerm.charAt(i+1) == ' ') {
                 searchTerm = searchTerm.substring(0, i) + searchTerm.substring(i+1);
             }
@@ -184,7 +199,7 @@ public class CustomerStore implements ICustomerStore {
         Customer[] arr = new Customer[customerArray.size()];
         int found = 0;
         Customer customer;
-        for (int i = 0; i < customerArray.size(); i++) {
+        for (i = 0; i < customerArray.size(); i++) {
             customer = customerArray.get(i);
             String customer_name = customer.getFirstName() + " " + customer.getLastName();
             customer_name = StringFormatter.convertAccents(customer_name);
@@ -197,7 +212,7 @@ public class CustomerStore implements ICustomerStore {
             }
         }
         Customer[] arr1 = new Customer[found];
-        for (int i = 0; i < found; i++) {
+        for (i = 0; i < found; i++) {
             arr1[i] = arr[i];
         }
         arr1 = getCustomersByName(arr1);

@@ -1,16 +1,22 @@
 package uk.ac.warwick.cs126.structures;
 
-public class MyNode<E, T> {
+public class MyNode<E, G, L extends MyArrayList<G>, F extends MyArrayList<E>, H extends MyArrayList<G>, T> {
 
     private E value;
+    private L value1;
+    private F value2;
+    private H value3;
     private T data;
-    private MyNode<E, T> parent;
-    private MyNode<E, T> left;
-    private MyNode<E, T> right;
+    private MyNode<E, G, L, F, H, T> parent;
+    private MyNode<E, G, L, F, H, T> left;
+    private MyNode<E, G, L, F, H, T> right;
     private int side;
 
-    public MyNode(E value, T data) {
+    public MyNode(E value, L value1, F value2, H value3, T data) {
         this.value = value;
+        this.value1 = value1;
+        this.value2 = value2;
+        this.value3 = value3;
         this.data = data;
         parent = null;
         left = null;
@@ -27,6 +33,33 @@ public class MyNode<E, T> {
         return old_value;
     }
 
+    public L getValue1() {
+        return this.value1;
+    }
+    public L setValue1(L value1) {
+        L old_value1 = this.value1;
+        this.value1 = value1;
+        return old_value1;
+    }
+
+    public F getValue2() {
+        return this.value2;
+    }
+    public F setValue2(F value2) {
+        F old_value2 = this.value2;
+        this.value2 = value2;
+        return old_value2;
+    }
+
+    public H getValue3() {
+        return this.value3;
+    }
+    public H setValue3(H value3) {
+        H old_value3 = this.value3;
+        this.value3 = value3;
+        return old_value3;
+    }
+
     public T getData() {
         return data;
     }
@@ -36,20 +69,20 @@ public class MyNode<E, T> {
         return old_data;
     }
 
-    public MyNode<E, T> getParent() {
+    public MyNode<E, G, L, F, H, T> getParent() {
         return parent;
     }
-    private MyNode<E, T> setParent(MyNode<E, T> parent) {
-        MyNode<E, T> node = this.parent;
+    private MyNode<E, G, L, F, H, T> setParent(MyNode<E, G, L, F, H, T> parent) {
+        MyNode<E, G, L, F, H, T> node = this.parent;
         this.parent = parent;
         return node;
     }
 
-    public MyNode<E, T> getLeft() {
+    public MyNode<E, G, L, F, H, T> getLeft() {
         return left;
     }
-    public MyNode<E, T> setLeft(MyNode<E, T> left) {
-        MyNode<E, T> node = this.left;
+    public MyNode<E, G, L, F, H, T> setLeft(MyNode<E, G, L, F, H, T> left) {
+        MyNode<E, G, L, F, H, T> node = this.left;
         this.left = left;
         if (left != null) {
             left.setParent(this);
@@ -58,11 +91,11 @@ public class MyNode<E, T> {
         return node;
     }
 
-    public MyNode<E, T> getRight() {
+    public MyNode<E, G, L, F, H, T> getRight() {
         return right;
     }
-    public MyNode<E, T> setRight(MyNode<E, T> right) {
-        MyNode<E, T> node = this.right;
+    public MyNode<E, G, L, F, H, T> setRight(MyNode<E, G, L, F, H, T> right) {
+        MyNode<E, G, L, F, H, T> node = this.right;
         this.right = right;
         if (right != null) {
             right.setParent(this);
@@ -88,13 +121,13 @@ public class MyNode<E, T> {
         return old_side;
     }
 
-    public MyNode<E, T> removeParent() {
-        MyNode<E, T> parent = this.parent;
+    public MyNode<E, G, L, F, H, T> removeParent() {
+        MyNode<E, G, L, F, H, T> parent = this.parent;
         if (parent != null) {
             int side = getSide();
             if (side == 1) {
                 parent.setLeft(null);
-            } else {
+            } else if (side == 2) {
                 parent.setRight(null);
             }
         }
