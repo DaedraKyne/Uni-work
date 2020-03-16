@@ -6,10 +6,8 @@ import uk.ac.warwick.cs126.models.Customer;
 import uk.ac.warwick.cs126.models.Restaurant;
 import uk.ac.warwick.cs126.models.Favourite;
 import uk.ac.warwick.cs126.models.Review;
-import uk.ac.warwick.cs126.structures.MyArrayList;
 import uk.ac.warwick.cs126.structures.MyAvlTree;
 
-import java.util.Date;
 
 public class DataChecker implements IDataChecker {
 
@@ -40,10 +38,9 @@ public class DataChecker implements IDataChecker {
             return false;
         }
         if (inputID.toString().length() != 16) {
-            System.out.println("Id is not long enough, length: " + inputID.toString().length() + ", id: " + inputID);
             return false;
         }
-        MyAvlTree<Integer, Integer, MyArrayList<Integer>, MyArrayList<Integer>, MyArrayList<Integer>, Integer> tree = new MyAvlTree<Integer, Integer, MyArrayList<Integer>, MyArrayList<Integer>, MyArrayList<Integer>, Integer>();
+        MyAvlTree<Integer, Integer, Integer> tree = new MyAvlTree<Integer, Integer, Integer>();
         char[] id = Long.toString(inputID).toCharArray();
         Integer data;
         int integer;

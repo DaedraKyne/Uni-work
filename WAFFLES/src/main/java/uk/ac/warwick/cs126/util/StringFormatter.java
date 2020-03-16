@@ -1,7 +1,6 @@
 package uk.ac.warwick.cs126.util;
 
 import uk.ac.warwick.cs126.structures.MyArrayList;
-import uk.ac.warwick.cs126.structures.MyAvlTree;
 
 public class StringFormatter {
     //private static MyAvlTree<Integer, MyArrayList<String[]>> accentTree = new MyAvlTree<Integer, MyArrayList<String[]>>();
@@ -1552,9 +1551,8 @@ public class StringFormatter {
         }
         for (int i = 0; i < str.length(); i++) {
             char c = str.charAt(i);
-            //MyArrayList<String[]> equal_strs = accentTree.getData((int)c);
             @SuppressWarnings("unchecked")
-            MyArrayList<String[]> equal_strs = (MyArrayList<String[]>) hashMapConverts[c % 500];
+            MyArrayList<String[]> equal_strs = (MyArrayList<String[]>) hashMapConverts[c % 500]; //all accent chars with that hash code
             if (equal_strs != null) {
                 for (int i2 = 0; i2 < equal_strs.size(); i2++) {
                     if (equal_strs.get(i2)[0].equals(str.substring(i, i+1))) {

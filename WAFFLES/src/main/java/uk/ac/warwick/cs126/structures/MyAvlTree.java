@@ -1,42 +1,89 @@
+/*
+* File: MyNode.java
+* Created: 05 March 2020, 12:30
+* Author: Sebastien Modley, First Year CompSci
+*/
+
 package uk.ac.warwick.cs126.structures;
 
 import java.lang.Math;
-import java.text.DateFormat;
-import java.util.Date;
-
-public class MyAvlTree<E extends Comparable<E>, G extends Comparable<G>, L extends MyArrayList<G>, F extends MyArrayList<E>, H extends MyArrayList<G>,  T> extends MyBinaryTree<E, G, L, F, H, T> {
 
 
+/*
+ * Class representing an AVL tree, stores its nodes and size and has a few
+ * simple AVL tree functions, as well as those iterated by inheriting from MyBinaryTree.
+ */
+public class MyAvlTree<E extends Comparable<E>, G extends Comparable<G>, T> extends MyBinaryTree<E, G, T> {
+
+
+  /*
+   * Constructor class for MyAvlTree.
+   * Simply calls inherited constructor method.
+   */
     public MyAvlTree() {
         super();
     }
 
-    public MyNode<E, G, L, F, H, T> add(E value, L value1, F value2, H value3, T data) {
-        MyNode<E, G, L, F, H, T> node = super.add(value, value1, value2, value3, data);
+
+  /*
+   * Calls the inherited add method, then
+   * restructures the tree from that node
+   *
+   * @param     value                  Main value of the new node
+   * @param     value1/value2/value3   optional values of the new node
+   * @param     data                   data stored by new node
+   * @return    node                   reference to added node
+   */
+    public MyNode<E, G, T> add(E value, MyArrayList<G> value1, MyArrayList<E> value2, MyArrayList<G> value3, T data) {
+        MyNode<E, G, T> node = super.add(value, value1, value2, value3, data);
         restructure(node);
         return node;
     }
 
-    public T remove(E value, L value1, F value2, H value3) {
-        MyNode<E, G, L, F, H, T> parent = super.getFirstNode(value, value1, value2, value3);
+
+  /*
+   * Calls the inherited remove method, then
+   * rebalances the tree from that node
+   *
+   * @param     value                  Main value of the node
+   * @param     value1/value2/value3   optional values of the node
+   * @return    data                   data stored by node removed
+   */
+    public T remove(E value, MyArrayList<G> value1, MyArrayList<E> value2, MyArrayList<G> value3) {
+        MyNode<E, G, T> parent = super.getFirstNode(value, value1, value2, value3);
         if (parent != null) {
             parent = parent.getParent();
             T old_data = super.remove(value, value1, value2, value3);
             rebalance(parent);
             return old_data;
         }
-        System.out.println("no element found with that value - removal failed");            
         return null;
     }
 
-    protected void restructure(MyNode<E, G, L, F, H, T> parent) {
+
+  /*
+   * Restructures the tree from the given node,
+   * if the tree at the given node is unbalanced.
+   * The function keeeps calling itself until the root
+   * is reached.
+   * Restructuring is used to ensure that the tree
+   * is blanced after adding a node (aka. the height of any node
+   * at depth n differs at most by 1 to that of all other nodes
+   * at that depth)
+   * Restructuring does not affect sorting or nodes in the tree.
+   *
+   * @param     value                  Main value of the node
+   * @param     value1/value2/value3   optional values of the node
+   * @return    data                   data stored by node removed
+   */
+    protected void restructure(MyNode<E, G, T> parent) {
         if (parent != null)  {
             int parent_side = parent.getSide();
             int left_height = getHeight(parent.getLeft());
             int right_height = getHeight(parent.getRight());
             int height_diff = Math.abs(left_height - right_height);
             if (height_diff > 1) {
-                MyNode<E, G, L, F, H, T> highest = (left_height - right_height < 0) ? parent.getRight() : parent.getLeft();
+                MyNode<E, G, T> highest = (left_height - right_height < 0) ? parent.getRight() : parent.getLeft();
                 left_height = getHeight(highest.getLeft());
                 right_height = getHeight(highest.getRight());
                 int side = highest.getSide();
@@ -58,7 +105,7 @@ public class MyAvlTree<E extends Comparable<E>, G extends Comparable<G>, L exten
                         highest.setLeft(parent);
                     }
                 } else {
-                    MyNode<E, G, L, F, H, T> snd_highest;
+                    MyNode<E, G, T> snd_highest;
                     if (side == 1) {
                         snd_highest = highest.getRight();
                     } else {
@@ -72,8 +119,8 @@ public class MyAvlTree<E extends Comparable<E>, G extends Comparable<G>, L exten
                         snd_highest.removeParent();
                         super.setRoot(snd_highest);
                     }
-                    MyNode<E, G, L, F, H, T> left = snd_highest.getLeft();
-                    MyNode<E, G, L, F, H, T> right = snd_highest.getRight();
+                    MyNode<E, G, T> left = snd_highest.getLeft();
+                    MyNode<E, G, T> right = snd_highest.getRight();
                     if (side == 1) {
                         snd_highest.setLeft(highest);
                         snd_highest.setRight(parent);
@@ -93,64 +140,69 @@ public class MyAvlTree<E extends Comparable<E>, G extends Comparable<G>, L exten
         }
     }
 
-    protected void rebalance(MyNode<E, G, L, F, H, T> parent) {
+
+  /*
+   * Rebalancing the tree from the given node,
+   * if the tree at the given node is unbalanced.
+   * The function keeeps calling itself until the root
+   * is reached.
+   * Rebalancing is used to ensure that the tree is blanced 
+   * after removing a node (aka. the height of any node
+   * at depth n differs at most by 1 to that of all other nodes
+   * at that depth).
+   * Rebalancing does not affect sorting or nodes in the tree.
+   *
+   * @param     value                  Main value of the node
+   * @param     value1/value2/value3   optional values of the node
+   * @return    data                   data stored by node removed
+   */
+    protected void rebalance(MyNode<E, G, T> parent) {
         if (parent != null) {
-            int i = 0;
-            MyNode<E, G, L, F, H, T> z_ptr = parent;
+            MyNode<E, G, T> z_ptr = parent;
             int height_left, height_right, height_diff;
             while (z_ptr != null) {
                 height_left = super.getHeight(z_ptr.getLeft());
                 height_right = super.getHeight(z_ptr.getRight());
                 height_diff = Math.abs(height_left - height_right);
                 if (height_diff > 1) {
-                    System.out.println("  -> start rebalancing");
-                    MyNode<E, G, L, F, H, T> y_ptr = height_left < height_right ?
+                    MyNode<E, G, T> y_ptr = height_left < height_right ?
                                             z_ptr.getRight() : z_ptr.getLeft();
                     height_left = super.getHeight(y_ptr.getLeft());
                     height_right = super.getHeight(y_ptr.getRight());                            
-                    MyNode<E, G, L, F, H, T> x_ptr = height_left < height_right ?
+                    MyNode<E, G, T> x_ptr = height_left < height_right ?
                                             y_ptr.getRight() : y_ptr.getLeft();
-                    MyNode<E, G, L, F, H, T> a, b, c;
+                    MyNode<E, G, T> a, b, c;
                     if (y_ptr.getSide() == 1) {
-                        System.out.println("    -> left");
                         c = z_ptr;
                         if (x_ptr.getSide() == 1) {
-                            System.out.println("        -> left");
                             a = x_ptr;
                             b = y_ptr;
                             c.setLeft(y_ptr.getRight());
                         } else {
-                            System.out.println("        -> right");
                             a = y_ptr;
                             b = x_ptr;
                             a.setRight(x_ptr.getLeft());
                             c.setLeft(x_ptr.getRight());
                         }
                     } else {
-                        System.out.println("    -> right");
                         a = z_ptr;
                         if (x_ptr.getSide() == 1) {
-                            System.out.println("        -> left");
                             b = x_ptr;
                             c = y_ptr;
                             a.setRight(x_ptr.getLeft());
                             c.setLeft(x_ptr.getRight());
 
                         } else {
-                            System.out.println("        -> right");
                             b = y_ptr;
                             c = x_ptr;
                             a.setRight(y_ptr.getLeft());
                         }
                     }
                     if (z_ptr.getSide() == 1) {
-                        System.out.println("Setting parent's left to b");
                         z_ptr.getParent().setLeft(b);
                     } else if (z_ptr.getSide() == 2) {
-                        System.out.println("Setting parent's right to b");
                         z_ptr.getParent().setRight(b);
                     } else {
-                        System.out.println("Setting root to b");
                         b.setSide(0);
                         super.setRoot(b);
                     }
@@ -160,7 +212,6 @@ public class MyAvlTree<E extends Comparable<E>, G extends Comparable<G>, L exten
 
                 }
                 z_ptr = z_ptr.getParent();
-                i++;
             }
 
         }

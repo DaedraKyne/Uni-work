@@ -21,34 +21,38 @@ import uk.ac.warwick.cs126.util.StringFormatter;
 import java.util.Iterator;
 
 
+/*
+ * Main class, in charge of dealing with all review tasks.
+ */
 public class ReviewStore implements IReviewStore {
 
-    private MyArrayList<Review> reviewArray;
     private DataChecker dataChecker;
     private KeywordChecker keywordChecker;
-    private MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, Review> reviewsById;
-    private MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, Review> reviewsByDate;
-    private MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, Review> reviewsByRating;
-    private MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, Review>> reviewsByCustomerId;
-    private MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, Review>> reviewsByRestaurantId;
-    private MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, Boolean> idBlacklist;
-    private MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Review>> ignoredFavouritesByCustomerId;
+    private MyAvlTree<Long, Long, Review> reviewsById; // AVL tree of favourites sorted by ID
+    private MyAvlTree<Long, Long, Review> reviewsByDate; // AVL tree of favourites sorted by date/ID
+    private MyAvlTree<Long, Long, Review> reviewsByRating; // AVL tree of favourites sorted by Rating/date/ID
+    private MyAvlTree<Long, Long, MyAvlTree<Long, Long, Review>> reviewsByCustomerId; // AVL tree of AVL trees of reviews (sorted by ID) for each restaurantID, sorted by customer ID
+    private MyAvlTree<Long, Long, MyAvlTree<Long, Long, Review>> reviewsByRestaurantId; // AVL tree of AVL trees of reviews (sorted by ID) for each restaurantID, sorted by restaurant ID
+    private MyAvlTree<Long, Long, Boolean> idBlacklist; // AVL tree of blacklisted IDs sorted by ID
+    private MyAvlTree<Long, Long, MyArrayList<Review>> ignoredFavouritesByCustomerId; // AVL tree of lists of blacklisted reviews that can be un-blacklisted, sorted by customerID
 
 
 
-
+  /*
+   * Constructor class for FavouriteStore.
+   * Initializes values.
+   */
     public ReviewStore() {
         // Initialise variables here
-        reviewArray = new MyArrayList<>();
         dataChecker = new DataChecker();
         keywordChecker = new KeywordChecker();
-        reviewsById = new MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, Review>();
-        reviewsByDate = new MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, Review>();
-        reviewsByRating = new MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, Review>();
-        reviewsByCustomerId = new MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, Review>>();
-        reviewsByRestaurantId = new MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, Review>>();
-        idBlacklist = new MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, Boolean>();
-        ignoredFavouritesByCustomerId = new MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Review>>();
+        reviewsById = new MyAvlTree<Long, Long, Review>();
+        reviewsByDate = new MyAvlTree<Long, Long, Review>();
+        reviewsByRating = new MyAvlTree<Long, Long, Review>();
+        reviewsByCustomerId = new MyAvlTree<Long, Long, MyAvlTree<Long, Long, Review>>();
+        reviewsByRestaurantId = new MyAvlTree<Long, Long, MyAvlTree<Long, Long, Review>>();
+        idBlacklist = new MyAvlTree<Long, Long, Boolean>();
+        ignoredFavouritesByCustomerId = new MyAvlTree<Long, Long, MyArrayList<Review>>();
 
     }
 
@@ -103,8 +107,26 @@ public class ReviewStore implements IReviewStore {
         return reviewArray;
     }
 
+
+  /*
+   * Attempts to add review to the store
+   * If review's id is blacklisted, do not add.
+   * If there already exists a stored review with that id,
+   * remove it and add blacklist the id.
+   * 
+   * If the review is valid and does not have an ID that has been blacklisted, is a
+   * duplicate, or is invalid: if there exists a review already inside the store with
+   * the same Customer ID and Restaurant ID, and if this review is newer than
+   * the one in the store, you must replace it with this review . If this replace
+   * happens, the ID of the review originally in the store should be blacklisted
+   * from further use.
+   *
+   * Returns true if review was successfully added.
+   * 
+   * @return         boolean
+   */
     public boolean addReview(Review review) {
-        // TODO
+        // DONE
         if (dataChecker.isValid(review)) {
             Review duplicate = reviewsById.getData(review.getID(), null, null, null);
             Boolean blackListed = idBlacklist.getData(review.getID(), null, null, null);
@@ -112,10 +134,6 @@ public class ReviewStore implements IReviewStore {
                 return false;
             }
             if (duplicate != null) {
-                /*if (favourite.toString().equals("ID: 9353171919852385    Customer ID: 9142424817356729    Restaurant ID: 8842391383657217    Date Favourited: 2016-08-16 06:15:49")) {
-                    System.out.println("Found already existing id");
-                    System.out.println(duplicate);
-                }*/
                 removeAll(duplicate);
                 idBlacklist.add(review.getID(), null, null, null, true);
                 MyArrayList<Review> hidden_matches = ignoredFavouritesByCustomerId.getData(duplicate.getCustomerID(), null, null, null);
@@ -131,10 +149,8 @@ public class ReviewStore implements IReviewStore {
                     }
                 }
                 if (hidden_favourite != null) {
-                    System.out.print("found hidden favourite");
                     Boolean hidden_fav_state = idBlacklist.getData(hidden_favourite.getID(), null, null, null);
                     if (hidden_fav_state == false) {
-                        System.out.println("- falsified, good hidden");
                         addAll(hidden_favourite);
                         ignoredFavouritesByCustomerId.setData(hidden_favourite.getCustomerID(), null, null, null, hidden_matches);
                         idBlacklist.remove(hidden_favourite.getID(), null, null, null);
@@ -144,7 +160,7 @@ public class ReviewStore implements IReviewStore {
             }
             Review[] sameCustomer = getReviewsByCustomerID(review.getCustomerID());
             Review[] sameRestaurant = getReviewsByRestaurantID(review.getRestaurantID());    
-            Review old_fav = findSimilarFavourite(review, sameCustomer, sameRestaurant);
+            Review old_fav = findSimilarReview(review, sameCustomer, sameRestaurant);
             if (old_fav != null) {
                 int date_diff = review.getDateReviewed().compareTo(old_fav.getDateReviewed());
                 if (date_diff > 0) {
@@ -161,7 +177,6 @@ public class ReviewStore implements IReviewStore {
                         ignoredFavouritesByCustomerId.setData(old_fav.getCustomerID(), null, null, null, hidden_matches);
                     }
                 } else {
-                    System.out.println(": archiving");
                     MyArrayList<Review> hidden_matches = ignoredFavouritesByCustomerId.getData(review.getCustomerID(), null, null, null);
                     if (hidden_matches == null) {
                         hidden_matches = new MyArrayList<Review>();
@@ -181,8 +196,17 @@ public class ReviewStore implements IReviewStore {
         return false;
     }
 
+
+  /*
+   * Attempts to add valid Review objects from the reviews input array to
+   * the store.
+   * Return true if the all the reviews are all successfully added to the data
+   * store, otherwise false .
+   *
+   * @return         boolean
+   */
     public boolean addReview(Review[] reviews) {
-        // TODO
+        // DONE
         if (reviews == null) {return false;}
         boolean fully_added = true;
         int i = 0;
@@ -197,65 +221,142 @@ public class ReviewStore implements IReviewStore {
         return fully_added;
     }
 
+
+  /*
+   * Returns the review with the matching ID id from the store, otherwise
+   * return null.
+   *
+   * @return    review
+   */
     public Review getReview(Long id) {
-        // TODO
+        // DONE
         if (dataChecker.isValid(id)) {
             return reviewsById.getData(id, null, null, null);
         }
         return null;
     }
 
+
+  /*
+   * Returns an array of all reviews in the store, sorted in 
+   * ascending order of ID.
+   *
+   * @return    sorted reviews
+   */
     public Review[] getReviews() {
-        // TODO
+        // DONE
         Review[] reviews = new Review[reviewsById.size()];
         int i = 0;
         for (Review review : reviewsById) {
             reviews[i] = review;
             i++;
         }
+        if (reviewsByRating.size() != i) {
+            Review[] regulated_reviews = new Review[i];
+            for (int i2 = 0; i2 < i; i2++) {
+                regulated_reviews[i2] = reviews[i2];
+            }
+            reviews = regulated_reviews;
+        }
         return reviews;
     }
 
+
+  /*
+   * Returns an array of all reviews in the store, sorted by 
+   * date favourited.
+   * If they have the same Date Reviewed, then it is sorted in
+   * ascending order of their ID
+   * 
+   * @return    sorted reviews
+   */
     public Review[] getReviewsByDate() {
-        // TODO
+        // DONE
         Review[] reviews = new Review[reviewsByDate.size()];
         int i = 0;
         for (Review review : reviewsByDate) {
             reviews[i] = review;
             i++;
         }
+        if (reviewsByDate.size() != i) {
+            Review[] regulated_reviews = new Review[i];
+            for (int i2 = 0; i2 < i; i2++) {
+                regulated_reviews[i2] = reviews[i2];
+            }
+            reviews = regulated_reviews;
+        }
         return reviews;
     }
 
+    
+  /*
+   * Returns an array of all reviews in the store, sorted by 
+   * descending order of Rating.
+   * If they have the same Rating, then it is sorted in
+   * terms of Date reviewed.
+   * If they have the same Date Reviewed, then it is sorted in
+   * ascending order of their ID.
+   * 
+   * @return    sorted reviews
+   */
     public Review[] getReviewsByRating() {
-        // TODO
+        // DONE
         Review[] reviews = new Review[reviewsByRating.size()];
         int i = 0;
         for (Review review : reviewsByRating) {
             reviews[i] = review;
             i++;
         }
+        if (reviewsByRating.size() != i) {
+            Review[] regulated_reviews = new Review[i];
+            for (int i2 = 0; i2 < i; i2++) {
+                regulated_reviews[i2] = reviews[i2];
+            }
+            reviews = regulated_reviews;
+        }
+
         return reviews;
     }
 
+
+  /*
+   * Return a review array with all the reviews from the store
+   * that have id for its Customer ID.
+   *
+   * @return    sorted reviews
+   */
     public Review[] getReviewsByCustomerID(Long id) {
-        // TODO
+        // DONE
         if (dataChecker.isValid(id)) {
-            getSortedArrayByTree(reviewsByCustomerId.getData(id, null, null, null));
+            return getSortedArrayByTree(reviewsByCustomerId.getData(id, null, null, null));
         }
         return new Review[0];
     }
 
+
+  /*
+   * Return a review array with all the reviews from the store
+   * that have id for its restaurant ID.
+   *
+   * @return    sorted reviews
+   */
     public Review[] getReviewsByRestaurantID(Long id) {
-        // TODO
+        // DONE
         if (dataChecker.isValid(id)) {
-            getSortedArrayByTree(reviewsByRestaurantId.getData(id, null, null, null));
+            return getSortedArrayByTree(reviewsByRestaurantId.getData(id, null, null, null));
         }
         return new Review[0];
     }
 
+
+  /*
+   * Return the average overall average review rating of
+   * the given customer.
+   *
+   * @return    average rating
+   */
     public float getAverageCustomerReviewRating(Long id) {
-        // TODO
+        // DONE
         if (dataChecker.isValid(id)) {
             Review[] reviews = getReviewsByCustomerID(id);
             float rating = 0.0f;
@@ -275,8 +376,15 @@ public class ReviewStore implements IReviewStore {
         return 0.0f;
     }
 
+
+  /*
+   * Return the average overall average review rating of
+   * the given restaurant.
+   *
+   * @return    average rating
+   */
     public float getAverageRestaurantReviewRating(Long id) {
-        // TODO
+        // DONE
         if (dataChecker.isValid(id)) {
             Review[] reviews = getReviewsByRestaurantID(id);
             float rating = 0.0f;
@@ -296,8 +404,15 @@ public class ReviewStore implements IReviewStore {
         return 0.0f;
     }
 
+
+  /*
+   * Return the histogram count of the ratings from all the
+   * reviews from the store that have id for its Customer ID.
+   * 
+   * @return    counts
+   */
     public int[] getCustomerReviewHistogramCount(Long id) {
-        // TODO
+        // DONE
         if (dataChecker.isValid(id)) {
             Review[] reviews = getReviewsByCustomerID(id);
             int[] count = new int[5];
@@ -305,15 +420,22 @@ public class ReviewStore implements IReviewStore {
                 count[i] = 0;
             }
             for (int i = 0; i < reviews.length; i++) {
-                count[reviews[i].getRating()] += 1;
+                count[reviews[i].getRating() - 1] += 1;
             }
             return count;
         }
         return new int[5];
     }
 
+
+  /*
+   * Return the histogram count of the ratings from all the
+   * reviews from the store that have id for its restaurant ID.
+   * 
+   * @return    counts
+   */
     public int[] getRestaurantReviewHistogramCount(Long id) {
-        // TODO
+        // DONE
         if (dataChecker.isValid(id)) {
             Review[] reviews = getReviewsByRestaurantID(id);
             int[] count = new int[5];
@@ -321,72 +443,120 @@ public class ReviewStore implements IReviewStore {
                 count[i] = 0;
             }
             for (int i = 0; i < reviews.length; i++) {
-                count[reviews[i].getRating()] += 1;
+                count[reviews[i].getRating() - 1] += 1;
             }
             return count;
         }
         return new int[5];
     }
 
+
+  /*
+   * Returns the Customer ID’s of top 20 customers who reviewed
+   * the most.
+   * If they have the same review count, then it is sorted in
+   * terms of last review date, from oldest to newest.
+   * If they have the same Date Reviewed, then it is sorted in
+   * ascending order of their ID.
+   * 
+   * @return    sorted customerIDs
+   */
     public Long[] getTopCustomersByReviewCount() {
-        // TODO
+        // DONE
         return getTopFavouriteCountOfTree(reviewsByCustomerId, "customer");
     }
 
+
+  /*
+   * Returns the Restaurant ID’s of top 20 restaurant who bave
+   * the most reviews.
+   * If they have the same review count, then it is sorted in
+   * terms of last review date, from oldest to newest.
+   * If they have the same Date Reviewed, then it is sorted in
+   * ascending order of their ID.
+   * 
+   * @return    sorted restaurantIDs
+   */
     public Long[] getTopRestaurantsByReviewCount() {
-        // TODO
+        // DONE
         return getTopFavouriteCountOfTree(reviewsByRestaurantId, "restaurant");
     }
 
+
+  /*
+   * Returns the Restaurant ID’s of top 20 restaurants that have
+   * the highest average review rating.
+   * If they have the same review count, then it is sorted in
+   * terms of last review date, from oldest to newest.
+   * If they have the same Date Reviewed, then it is sorted in
+   * ascending order of their ID.
+   * 
+   * @return    sorted restaurantIDs
+   */
     public Long[] getTopRatedRestaurants() {
-        // TODO
+        // DONE
         return getTopFavouriteCountOfTree(reviewsByRestaurantId, "top restaurants");
     }
 
+
+  /*
+   * Return the top 5 keywords, in lowercase form, associated with
+   * the Restaurant with Restaurant ID id.
+   * If they have the same appearance count, then it is sorted
+   * alphabetically.
+   * 
+   * @return    sorted restaurantIDs
+   */
     public String[] getTopKeywordsForRestaurant(Long id) {
-        // TODO
-        MyAvlTree<Integer, String, MyArrayList<String>, MyArrayList<Integer>, MyArrayList<String>, String> top_keyword_tree = new MyAvlTree<Integer, String, MyArrayList<String>, MyArrayList<Integer>, MyArrayList<String>, String>();
-        MyAvlTree<String, String, MyArrayList<String>, MyArrayList<String>, MyArrayList<String>, Integer> keyword_tree = new MyAvlTree<String, String, MyArrayList<String>, MyArrayList<String>, MyArrayList<String>, Integer>();
+        // DONE
+        MyAvlTree<Integer, String, String> top_keyword_tree = new MyAvlTree<Integer, String, String>();
+        MyAvlTree<String, String, Integer> keyword_tree = new MyAvlTree<String, String, Integer>();
         MyArrayList<String> found_keywords = new MyArrayList<String>();
         int count;
-        for (MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, Review> tree : reviewsByRestaurantId) {
-            for (Review review : tree) {
-                String[] words = review.getReview().split(" ");
-                for (int i = 0; i < words.length; i++) {
-                    words[i] = words[i].toLowerCase();
-                    for (int i2 = 0; i < words[i].length(); i++) {
-                        char c = words[i].charAt(i2);
-                        if ((c < 'a' || c > 'z') && c != '0') {
-                            if (i2 != words[i].length() - 1) {
-                                words[i] = words[i].substring(0, i2) + words[i].substring(i2 + 1, words.length);
-                            } else {
-                                words[i] = words[i].substring(0, i2);
-                            }
-                        }
-                    }
-                }
-                for (int i = 0; i < words.length; i++) {
-                    String word = words[i];
-                    MyArrayList<String> wordList = new MyArrayList<String>();
-                    wordList.add(word);
-                    if (keywordChecker.isAKeyword(word)) {
-                        if (found_keywords.contains(word)) {
-                            count = keyword_tree.getData(word, null, null, null);
-                            keyword_tree.setData(word, null, null, null, count + 1);
-                            top_keyword_tree.remove(count, wordList, null, null);
-                            top_keyword_tree.add(count + 1, wordList, null, null, word);
+        Review[] reviews = getReviewsByRestaurantID(id);
+        if (reviews == null) {
+            return new String[5];
+        }
+        for (Review review : reviews) {
+            String[] words = review.getReview().split(" ");
+            for (int i = 0; i < words.length; i++) {
+                words[i] = words[i].toLowerCase();
+                for (int i2 = 0; i2 < words[i].length(); i2++) {
+                    char c = words[i].charAt(i2);
+                    if ((c < 'a' || c > 'z') && c != '0') {
+                        if (i2 != words[i].length() - 1) {
+                            words[i] = words[i].substring(0, i2) + words[i].substring(i2 + 1, words[i].length());
+                            i2 -= 1;
                         } else {
-                            found_keywords.add(word);
-                            keyword_tree.add(word, null, null, null, 1);
-                            top_keyword_tree.add(1, wordList, null, null, word);
+                            words[i] = words[i].substring(0, i2);
                         }
-                    }
-                    if (top_keyword_tree.size() > 5) {
-                        top_keyword_tree.removeLargest();
                     }
                 }
             }
-
+            MyArrayList<String> wordList;
+            for (int i = 0; i < words.length; i++) {
+                String word = words[i];
+                if (word.equals("") || word == null || word.isEmpty()) {
+                    continue;
+                }
+                wordList = new MyArrayList<String>();
+                wordList.add(word);
+                if (keywordChecker.isAKeyword(word)) {
+                    if (found_keywords.contains(word)) {
+                        count = keyword_tree.getData(word, null, null, null);
+                        keyword_tree.setData(word, null, null, null, count + 1);
+                        top_keyword_tree.remove(count, wordList, null, null);
+                        top_keyword_tree.add(count + 1, wordList, null, null, word);
+                    } else {
+                        found_keywords.add(word);
+                        keyword_tree.add(word, null, null, null, 1);
+                        top_keyword_tree.add(1, wordList, null, null, word);
+                    }
+                }
+                if (top_keyword_tree.size() > 5) {
+                    top_keyword_tree.removeLargest();
+                }
+            }
         }
         String[] topKeywords = new String[5];
         int i = 0;
@@ -397,84 +567,143 @@ public class ReviewStore implements IReviewStore {
         return topKeywords;
     }
 
+
+  /*
+   * Return an array of all the reviews from the store whose Review
+   * contains the given query str .
+   *
+   * @param     searchterm      term that is searched for
+   * @return    reviews
+   */
     public Review[] getReviewsContaining(String searchTerm) {
-        // TODO
+        // DONE
         // String searchTermConverted = stringFormatter.convertAccents(searchTerm);
         // String searchTermConvertedFaster = stringFormatter.convertAccentsFaster(searchTerm);
-        return new Review[0];
+        if (searchTerm.isEmpty()) {
+            return new Review[0];
+        }
+        int i = 0;
+        while (searchTerm.charAt(i) == ' ') {i++;}
+        searchTerm = searchTerm.substring(i);
+        i = 1;
+        while (searchTerm.charAt(searchTerm.length() - i) == ' ') {i++;}
+        searchTerm = searchTerm.substring(0, searchTerm.length() - i + 1);
+        for (i = 0; i < searchTerm.length() - 1; i++) {
+            if (searchTerm.charAt(i) == ' ' && searchTerm.charAt(i+1) == ' ') {
+                searchTerm = searchTerm.substring(0, i) + searchTerm.substring(i+1);
+                i -= 1;
+            }
+        }
+        String searchTermConverted = StringFormatter.convertAccentsFaster(searchTerm);
+        searchTermConverted = searchTermConverted.toLowerCase();
+        Review[] reviews = getReviewsByDate();
+        Review[] reviewMatches = new Review[reviews.length];
+        String name;
+        int found = 0;
+        i = 0;
+        for (Review review : reviews) {
+            if (review == null) {continue;}
+            name = review.getReview();
+            if (name == null || name.equals("") || name.isEmpty()) {continue;}
+            name = StringFormatter.convertAccents(name);
+            name = name.toLowerCase();
+            for (int i2 = 0; i2 < name.length() - searchTermConverted.length() + 1; i2++) {
+                if (name.substring(i2, i2 + searchTermConverted.length()).equals(searchTermConverted)) {
+                    reviewMatches[found++] = review;
+                    break; //Once a match has been found for a given review, move on to next review
+                }
+            }
+            i++;
+        }
+        Review[] arr = new Review[found];
+        for (i = 0; i < found; i++) {
+            arr[i] = reviewMatches[i];
+        }
+        return arr;
     }
 
     // ADDED FUNCTIONS
 
+
+  /*
+   * Adds the given review to all restaurant AVL trees.
+   *
+   * @param     review
+   */
     private void addAll(Review review) {
-        MyArrayList<Long> reviewID = new MyArrayList<Long>();
-        reviewID.add(review.getID());
         reviewsById.add(review.getID(), null, null, null, review);
         Long date = review.getDateReviewed().getTime() * (-1);
+        MyArrayList<Long> reviewID = new MyArrayList<Long>();
+        reviewID.add(review.getID());
         reviewsByDate.add(date, reviewID, null, null, review);
-        MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, Review> customerTree = reviewsByCustomerId.getData(review.getCustomerID(), null, null, null);
+        MyAvlTree<Long, Long, Review> customerTree = reviewsByCustomerId.getData(review.getCustomerID(), null, null, null);
         if (customerTree != null) {
             customerTree.add(date, null , reviewID, null, review);
             reviewsByCustomerId.setData(review.getCustomerID(), null, null, null, customerTree);
         } else {
-            customerTree = new MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, Review>();
+            customerTree = new MyAvlTree<Long, Long, Review>();
             customerTree.add(date, null , reviewID, null, review);
             reviewsByCustomerId.add(review.getCustomerID(), null, null, null, customerTree);
         }
-        MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, Review> restaurantTree = reviewsByRestaurantId.getData(review.getRestaurantID(), null, null, null);
+        MyAvlTree<Long, Long, Review> restaurantTree = reviewsByRestaurantId.getData(review.getRestaurantID(), null, null, null);
         if (restaurantTree != null) {
             restaurantTree.add(date, null , reviewID, null, review);
             reviewsByRestaurantId.setData(review.getRestaurantID(), null, null, null, restaurantTree);
         } else {
-            restaurantTree = new MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, Review>();
+            restaurantTree = new MyAvlTree<Long, Long, Review>();
             restaurantTree.add(date, null , reviewID, null, review);
             reviewsByRestaurantId.add(review.getRestaurantID(), null, null, null, restaurantTree);
 
         }
-        reviewID.set(0, date);
+        reviewID = new MyArrayList<Long>();
+        reviewID.add(date);
         reviewID.add(review.getID());
         Long rating = (long) (-1) * review.getRating();
         reviewsByRating.add(rating, reviewID, null, null, review);
 
     }
 
+
+  /*
+   * Removes the given review from all restaurant AVL trees.
+   *
+   * @param     review
+   */
     private void removeAll(Review review) {
-        /*if (favourite.toString().equals("ID: 9353171919852385    Customer ID: 5473464975788313    Restaurant ID: 7816833756189615    Date Favourited: 2020-01-05 16:27:09")) {
-            System.out.println("Removing from id tree");
-        }*/
+        reviewsById.remove(review.getID(), null, null, null);
+        long date = review.getDateReviewed().getTime() * (-1);
         MyArrayList<Long> reviewID = new MyArrayList<Long>();
         reviewID.add(review.getID());
-        reviewsById.remove(review.getID(), null, null, null);
-        Long date = review.getDateReviewed().getTime() * (-1);
         reviewsByDate.remove(date, reviewID, null, null);
         reviewsByCustomerId.getData(review.getCustomerID(), null, null, null).remove(
             date, null, reviewID, null);
         reviewsByRestaurantId.getData(review.getRestaurantID(), null, null, null).remove(
             date, null, reviewID, null);
-        reviewID.set(0, date);
+        reviewID = new MyArrayList<Long>();
+        reviewID.add(date);
         reviewID.add(review.getID());
         Long rating = (long) (-1) * review.getRating();
         reviewsByRating.remove(rating, reviewID, null, null);
+
     }
 
-    private Review findSimilarFavourite(Review review, Review[] sameCustomer, Review[] sameRestaurant) {
+
+  /*
+   * Checks to see if there exists a review in the given review arrays with
+   * the same restaurantID and customerID.
+   * If so, returns it
+   *
+   * @param     review
+   * @param     sorted customerFavourites
+   * @param     sorted restaurantFavourites
+   * @return    review match
+   */
+    private Review findSimilarReview(Review review, Review[] sameCustomer, Review[] sameRestaurant) {
         if (sameCustomer.length == 0 || sameRestaurant.length == 0) {return null;}
         int ptr1 = 0;
         int ptr2 = 0;
         int compare;
         while (ptr1 < (sameCustomer.length - 1) || ptr2 < (sameRestaurant.length - 1)) {
-            if (sameCustomer[ptr1] == null) {
-                System.out.println("customers: " + sameCustomer.length + " <- " + review.getCustomerID());
-                for (int i = 0; i < sameCustomer.length; i++) {
-                    System.out.println(sameCustomer[i]);
-                }
-            }
-            if (sameRestaurant[ptr2] == null) {
-                System.out.println("restaurants: " + sameRestaurant.length + " <- " + review.getRestaurantID());
-                for (int i = 0; i < sameRestaurant.length; i++) {
-                    System.out.println(sameRestaurant[i]);
-                }
-            }
             if (sameCustomer[ptr1].getID() == sameRestaurant[ptr2].getID()) {
                 return sameCustomer[ptr1];
             }
@@ -499,26 +728,28 @@ public class ReviewStore implements IReviewStore {
         return null;
     }
 
-    private Review[] getSortedArrayByTree(MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, Review> original_tree) {
+
+  /*
+   * Given a tree of reviews, returns array of all sorted contained
+   * in it.
+   *
+   * @param     reviews AVL tree
+   * @return    sorted reviews
+   */
+    private Review[] getSortedArrayByTree(MyAvlTree<Long, Long, Review> original_tree) {
         if (original_tree != null) {
             Review[] fav_array = new Review[original_tree.size()];
             int i = 0;
-            Iterator<Review> iter = original_tree.iterator();
-            if (original_tree.size() > 0 && !iter.hasNext()) {
-                System.out.println("Cannot iterate through non-empty tree for some reason: ");
-            }
             for (Review review : original_tree) {
-                if (review == null) {
-                    System.out.println("Size of tree: " + original_tree.size());
-                    System.out.println("Error at: " + i);
-                }
                 fav_array[i] = review;
                 i++;
             }
             if (original_tree.size() != i) {
-                System.out.println("Not iterated through whole tree");
-                System.out.println("Size of tree: " + original_tree.size());
-                System.out.println("Size of i: " + i);
+                Review[] regulated_reviews = new Review[i];
+                for (int i2 = 0; i2 < i; i2++) {
+                    regulated_reviews[i2] = fav_array[i2];
+                }
+                fav_array = regulated_reviews;    
             }
             return fav_array;
         }
@@ -526,51 +757,51 @@ public class ReviewStore implements IReviewStore {
 
     }
 
-    private Long[] getTopFavouriteCountOfTree(MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, Review>> reviewsByTree, String store) {
-        // TODO
-        MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, Long> top_store_tree = new MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, Long>();
-        Long earliest_date = 0L; //Initial set to max value of long
+
+  /*
+   * Given a tree of trees of reviews, and a store type, returns array
+   * of top IDs or top ratings.
+   *
+   * @param     reviewsByTreeOfTrees
+   * @param     store -- "customer", "restaurant", "top restaurants"
+   * @return    sorted IDs/ratings
+   */
+    private Long[] getTopFavouriteCountOfTree(MyAvlTree<Long, Long, MyAvlTree<Long, Long, Review>> reviewsByTreeOfTrees, String store) {
+        // DONE
+        MyAvlTree<Long, Long, Long> top_store_tree = new MyAvlTree<Long, Long, Long>();
         Long date;
-        Long smallest_id = 9223372036854775807L; //Initial set to max value of long
         MyArrayList<Long> compare;
         Long count;
         Long reviewID;
         Long storeID = null;
         Review review;
-        for (MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, Review> tree : reviewsByTree) {
+        for (MyAvlTree<Long, Long, Review> tree : reviewsByTreeOfTrees) {
             count = 0L;
-            earliest_date = 0L;
-            smallest_id = 9223372036854775807L;
+            date = 0L;
+            reviewID = 9223372036854775807L;
             if (!store.equals("top restaurants")) {
                 count = (long) tree.size();
             }
             Iterator<Review> iter = tree.iterator(); //iterating from oldest to youngest favourite, BUT from biggest to smallest favouriteID
-            while (iter.hasNext()) {
+            if (iter.hasNext()) {
                 review = iter.next();
-                if (store.equals("top restaurants")) {
-                    count = (long) getAverageRestaurantReviewRating(review.getRestaurantID());;
-                }    
                 date = review.getDateReviewed().getTime();
                 reviewID = review.getID();
-                if (date < earliest_date && earliest_date != 0L) {
-                    break;
+                if (store.equals("customer")) {
+                    storeID = review.getCustomerID();
+                } else if (store.equals("restaurant") || store.equals("top restaurants")) {
+                    storeID = review.getRestaurantID();
                 }
-                if (reviewID <= smallest_id) {
-                    earliest_date = date;
-                    smallest_id = reviewID;
-                    if (store.equals("customer")) {
-                        storeID = review.getCustomerID();
-                    } else if (store.equals("restaurant") || store.equals("top restaurants")) {
-                        storeID = review.getRestaurantID();
-                    }
-                }              
-            }
-            compare = new MyArrayList<Long>();
-            compare.add(earliest_date);
-            compare.add(smallest_id);
-            top_store_tree.add((-1) * count, null , compare, null, storeID);
-            if (top_store_tree.size() > 20) {
-                top_store_tree.removeLargest();
+                if (store.equals("top restaurants")) {
+                    count = (long) getAverageRestaurantReviewRating(storeID);;
+                }
+                compare = new MyArrayList<Long>();
+                compare.add(date);
+                compare.add(reviewID);
+                top_store_tree.add((-1) * count, null , compare, null, storeID);
+                if (top_store_tree.size() > 20) {
+                    top_store_tree.removeLargest();
+                }    
             }
         }
         Long[] topStores = new Long[20];

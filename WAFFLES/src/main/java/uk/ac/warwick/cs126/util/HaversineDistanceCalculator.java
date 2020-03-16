@@ -19,7 +19,7 @@ public class HaversineDistanceCalculator {
         d = 2 * Math.asin(Math.sqrt(d));
         d *= R;
         String[] num = Double.toString(d).split("\\.");
-        float f = Float.parseFloat(num[0] + "." + num[1].substring(0, 1));
+        float f = Float.parseFloat(num[0] + "." + num[1].substring(0, 1)); //get int and first decimal
         return f;
     }
 

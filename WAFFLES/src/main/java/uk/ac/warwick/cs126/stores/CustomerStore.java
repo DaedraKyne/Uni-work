@@ -12,25 +12,32 @@ import org.apache.commons.io.IOUtils;
 
 import uk.ac.warwick.cs126.structures.MyArrayList;
 import uk.ac.warwick.cs126.structures.MyAvlTree;
-import uk.ac.warwick.cs126.structures.MyBinaryTree;
 import uk.ac.warwick.cs126.util.DataChecker;
 import uk.ac.warwick.cs126.util.StringFormatter;
 
+
+/*
+ * Main class, in charge of dealing with all customer tasks.
+ */
 public class CustomerStore implements ICustomerStore {
 
-    private MyArrayList<Customer> customerArray;
     private DataChecker dataChecker;
 
-    private MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, Customer> idSortedCustomerArray;
-    private MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, Boolean> idBlacklist;
+    private MyAvlTree<Long, Long, Customer> idSortedCustomerTree; // AVL tree of customers sorted by ID
+    private MyAvlTree<String, Long, Customer> nameSortedCustomerTree; // AVL tree of customers sorted by lastname/firstname/id
+    private MyAvlTree<Long, Long, Boolean> idBlacklist; // AVL tree of blacklisted IDs sorted by ID
     
 
+  /*
+   * Constructor class for CustomerStore.
+   * Initializes values.
+   */
     public CustomerStore() {
         // Initialise variables here
-        customerArray = new MyArrayList<>();
         dataChecker = new DataChecker();
-        idSortedCustomerArray = new MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, Customer>();
-        idBlacklist = new MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, Boolean>();
+        idSortedCustomerTree = new MyAvlTree<Long, Long, Customer>();
+        nameSortedCustomerTree = new MyAvlTree<String, Long, Customer>();
+        idBlacklist = new MyAvlTree<Long, Long, Boolean>();
     }
 
     public Customer[] loadCustomerDataToArray(InputStream resource) {
@@ -86,6 +93,17 @@ public class CustomerStore implements ICustomerStore {
         return customerArray;
     }
 
+
+
+  /*
+   * Attempts to add customer to the store
+   * If customer's id is blacklisted, do not add.
+   * If there already exists a stored customer with that id,
+   * remove it and add blacklist the id.
+   * Returns true if customer was successfully added.
+   * 
+   * @return         boolean
+   */
     public boolean addCustomer(Customer customer) {
         // DONE
         if (dataChecker.isValid(customer)) {
@@ -93,18 +111,32 @@ public class CustomerStore implements ICustomerStore {
             if (idBlacklist.contains(customerID, null, null, null)) {
                 return false;
             }
-            if (idSortedCustomerArray.contains(customerID, null, null, null)) {
-                idSortedCustomerArray.remove(customerID, null, null, null);
+            MyArrayList<String> nameList = new MyArrayList<String>();
+            MyArrayList<Long> idList = new MyArrayList<Long>();
+            nameList.add(customer.getFirstName());
+            idList.add(customerID);
+            if (idSortedCustomerTree.contains(customerID, null, null, null)) {
+                idSortedCustomerTree.remove(customerID, null, null, null);
+                nameSortedCustomerTree.remove(customer.getLastName(), null, nameList, idList);    
                 idBlacklist.add(customerID, null, null, null, true);
                 return false;
             }
-            customerArray.add(customer);
-            idSortedCustomerArray.add(customerID, null, null, null, customer);
+            idSortedCustomerTree.add(customerID, null, null, null, customer);
+            nameSortedCustomerTree.add(customer.getLastName(), null, nameList, idList, customer);
             return true;
         }
         return false;
     }
 
+
+  /*
+   * Attempts to add valid Customer objects from the customers input array to
+   * the store.
+   * Return true if the all the customers are all successfully added to the data
+   * store, otherwise false .
+   *
+   * @return         boolean
+   */
     public boolean addCustomer(Customer[] customers) {
         // DONE
         if (customers != null) {
@@ -120,39 +152,56 @@ public class CustomerStore implements ICustomerStore {
         return false;
     }
 
+
+  /*
+   * Returns the Customer with the matching ID id from the store, otherwise
+   * return null.
+   *
+   * @return    customer
+   */
     public Customer getCustomer(Long id) {
         // DONE
         if (id != null) {
-            return idSortedCustomerArray.getData(id, null, null, null);
+            return idSortedCustomerTree.getData(id, null, null, null);
         }
         return null;
     }
 
+
+  /*
+   * Returns an array of all customers in the store, sorted in 
+   * ascending order of ID.
+   *
+   * @return    customers
+   */
     public Customer[] getCustomers() {
         // DONE
-        /*Customer[] arr = new Customer[customerArray.size()];
-        for (int i = 0; i < customerArray.size(); i++) {
-            arr[i] = customerArray.get(i);
-        }
-        arr = sortByID(arr);
-        return arr;*/
-        Customer[] arr = new Customer[idSortedCustomerArray.size()];
+        Customer[] arr = new Customer[idSortedCustomerTree.size()];
         int i = 0;
-        for (Customer customer : idSortedCustomerArray) {
+        for (Customer customer : idSortedCustomerTree) {
             arr[i++] = customer;
         }
         return arr;
     }
 
+
+  /*
+   * Returns an array of all valid customers from the given array,
+   * sorted in ascending order of ID.
+   *
+   * @return    customers
+   */
     public Customer[] getCustomers(Customer[] customers) {
         // DONE
         //Customer[] arr = sortByID(customers);
         if (customers != null) {
-            Customer[] arr = new Customer[customers.length];
-            MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, Customer> custom_tree = new MyAvlTree<Long, Long, MyArrayList<Long>, MyArrayList<Long>, MyArrayList<Long>, Customer>();
+            MyAvlTree<Long, Long, Customer> custom_tree = new MyAvlTree<Long, Long, Customer>();
             for (Customer customer : customers) {
-                custom_tree.add(customer.getID(), null, null, null, customer);
+                if (dataChecker.isValid(customer)) {
+                    custom_tree.add(customer.getID(), null, null, null, customer);
+                }
             }
+            Customer[] arr = new Customer[custom_tree.size()];
             int i = 0;
             for (Customer customer : custom_tree) {
                 arr[i++] = customer;
@@ -162,108 +211,106 @@ public class CustomerStore implements ICustomerStore {
         return new Customer[0];
     }
 
+
+  /*
+   * Returns an array of all customers in the store, sorted alphabetically by Last
+   * Name, if they have same Last Name then alphabetically by First Name.
+   * If they have the same Last Name and First Name, then it is sorted in ascending
+   * order of ID.
+   *
+   * @return    customers
+   */
     public Customer[] getCustomersByName() {
         // DONE
-        Customer[] arr = new Customer[customerArray.size()];
-        for (int i = 0; i < customerArray.size(); i++) {
-            arr[i] = customerArray.get(i);
+        Customer[] arr = new Customer[nameSortedCustomerTree.size()];
+        int i = 0;
+        for (Customer customer : nameSortedCustomerTree) {
+            arr[i] = customer;
+            i++;
         }
-        arr = sortByName(arr);
         return arr;
     }
 
+
+  /*
+   * Returns an array of all valid customers from the given array, sorted 
+   * alphabetically by Last Name, if they have same Last Name then alphabetically 
+   * by First Name.
+   * If they have the same Last Name and First Name, then it is sorted in ascending
+   * order of ID.
+   *
+   * @return    customers
+   */
     public Customer[] getCustomersByName(Customer[] customers) {
         // DONE
-        Customer[] arr = sortByName(customers);
-        return arr;
+        if (customers != null) {
+            MyAvlTree<String, Long, Customer> custom_tree = new MyAvlTree<String, Long, Customer>();
+            MyArrayList<String> nameList;
+            MyArrayList<Long> idList;
+            for (Customer customer : customers) {
+                if (dataChecker.isValid(customer)) {
+                    nameList = new MyArrayList<String>();
+                    idList = new MyArrayList<Long>();
+                    nameList.add(customer.getFirstName());
+                    idList.add(customer.getID());
+                    custom_tree.add(customer.getLastName(), null, nameList, idList, customer);
+                }
+            }
+            Customer[] arr = new Customer[custom_tree.size()];
+            int i = 0;
+            for (Customer customer : custom_tree) {
+                arr[i] = customer;
+                i++;
+            }
+            return arr;
+        }
+        return new Customer[0];
     }
 
+
+  /*
+   * Return an array of all the customers from the store whose First Name and 
+   * LastName contain the given query str.
+   *
+   * @return    customers
+   */
     public Customer[] getCustomersContaining(String searchTerm) {
-        // TODO
+        // DONE
         if (searchTerm.isEmpty()) {
             return new Customer[0];
         }
         int i = 0;
         while (searchTerm.charAt(i) == ' ') {i++;}
-        searchTerm = searchTerm.substring(i);
+        searchTerm = searchTerm.substring(i); //remove white spaces at start of searchterm
         i = 1;
-        while (searchTerm.charAt(searchTerm.length() - i) == ' ') {i++;}
+        while (searchTerm.charAt(searchTerm.length() - i) == ' ') {i++;} //remove white spaces at end of searchterm
         searchTerm = searchTerm.substring(0, searchTerm.length() - i + 1);
         for (i = 0; i < searchTerm.length() - 1; i++) {
-            if (searchTerm.charAt(i) == ' ' && searchTerm.charAt(i+1) == ' ') {
+            if (searchTerm.charAt(i) == ' ' && searchTerm.charAt(i+1) == ' ') { // remove extra whitespaces between characters, keep only one
                 searchTerm = searchTerm.substring(0, i) + searchTerm.substring(i+1);
+                i -= 1;
             }
         }
         String searchTermConverted = StringFormatter.convertAccentsFaster(searchTerm);
         searchTermConverted = searchTermConverted.toLowerCase();
-        Customer[] arr = new Customer[customerArray.size()];
+        Customer[] arr = new Customer[nameSortedCustomerTree.size()];
         int found = 0;
-        Customer customer;
-        for (i = 0; i < customerArray.size(); i++) {
-            customer = customerArray.get(i);
+        for (Customer customer : nameSortedCustomerTree) {
             String customer_name = customer.getFirstName() + " " + customer.getLastName();
             customer_name = StringFormatter.convertAccents(customer_name);
             customer_name = customer_name.toLowerCase();
-            for (int i2 = 0; i2 < customer_name.length() - searchTermConverted.length(); i2++) {
+            for (int i2 = 0; i2 < customer_name.length() - searchTermConverted.length() + 1; i2++) {
                 if (customer_name.substring(i2, i2 + searchTermConverted.length()).equals(searchTermConverted)) {
                     arr[found++] = customer;
                     break; //Once a match has been found for a given customer, move on to next customer
                 }
             }
         }
-        Customer[] arr1 = new Customer[found];
+        Customer[] arr1 = new Customer[found]; // create new array to ensure all un-used null elements of results array are removed
         for (i = 0; i < found; i++) {
             arr1[i] = arr[i];
         }
-        arr1 = getCustomersByName(arr1);
         return arr1;
-    }
-
-    //ADDED FUNCTIONS
-
-    public Customer[] sortByID(Customer[] customers) {
-        if (customers != null) {
-            Customer temp;
-            Customer[] arr = customers.clone();
-            for (int i = 0; i < arr.length; i++) {
-                for (int i2 = i; i2 < arr.length; i2++) {
-                    if (arr[i2].getID() < arr[i].getID()) {
-                        temp = arr[i];
-                        arr[i] = arr[i2];
-                        arr[i2] = temp;
-                    }
-                }
-            }
-            return arr;    
-        }
-        return new Customer[0];
-
-    }
-
-    public Customer[] sortByName(Customer[] customers) {
-        if (customers != null) {
-            Customer temp;
-            Customer[] arr = customers.clone();
-            int compare;
-            for (int i = 0; i < arr.length; i++) {
-                for (int i2 = i+1; i2 < arr.length; i2++) {
-                    compare = arr[i2].getLastName().toUpperCase().compareTo(arr[i].getLastName().toUpperCase());
-                    if (compare == 0) {
-                        compare = arr[i2].getFirstName().toUpperCase().compareTo(arr[i].getFirstName().toUpperCase());
-                        if (compare == 0) {
-                            compare = ((Long)(arr[i2].getID() - arr[i].getID())).intValue();
-                        }
-                    }
-                    if (compare < 0) {
-                        temp = arr[i];
-                        arr[i] = arr[i2];
-                        arr[i2] = temp;
-                    }
-                }
-            }
-            return arr;    
-        }
-        return new Customer[0];
     }
 
 }

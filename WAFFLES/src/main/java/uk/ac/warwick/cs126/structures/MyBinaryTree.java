@@ -1,31 +1,64 @@
+/*
+* File: MyBinaryTree.java
+* Created: 04 March 2020, 18:48
+* Author: Sebastien Modley, First Year CompSci
+*/
+
 package uk.ac.warwick.cs126.structures;
 
 import java.util.Iterator;
 
-public class MyBinaryTree<E extends Comparable<E>, G extends Comparable<G>, L extends MyArrayList<G>, F extends MyArrayList<E>, H extends MyArrayList<G>,  T> implements Iterable<T> {
-    private MyNode<E, G, L, F, H, T> root;
-    private int size;
+/*
+ * Class representing a binary tree, stores its nodes and size and has a few
+ * simple binary tree functions.
+ */
+public class MyBinaryTree<E extends Comparable<E>, G extends Comparable<G>, T> implements Iterable<T> {
+    private MyNode<E, G, T> root; // root node of tree
+    private int size; // amount of nodes in tree
 
+
+  /*
+   * Constructor class for MyBinaryTree.
+   * Initializes values.
+   */
     public MyBinaryTree() {
         this.root = null;
         size = 0;
     }
 
-    public MyNode<E, G, L, F, H, T> add(E value, L value1, F value2, H value3, T data) {
-        if (data != null) {
-            size += 1;
-            if (root == null) {
-                return root = new MyNode<E, G, L, F, H, T>(value, value1, value2, value3, data);
-            } else {
-                return addToTree(root, value, value1, value2, value3, data);
-            }    
-        }
-        return null;
+    
+  /*
+   * Adds new node to tree's root if it doesn't have one,
+   * or calls addToTree()
+   *
+   * @param     value                  Main value of the new node
+   * @param     value1/value2/value3   optional values of the new node
+   * @param     data                   data stored by new node
+   * @return    node                   reference to added node
+   */
+    public MyNode<E, G, T> add(E value, MyArrayList<G> value1, MyArrayList<E> value2, MyArrayList<G> value3, T data) {
+        size += 1;
+        if (root == null) {
+            return root = new MyNode<E, G, T>(value, value1, value2, value3, data);
+        } else {
+            return addToTree(root, value, value1, value2, value3, data);
+        }    
     }
 
-    private MyNode<E, G, L, F, H, T> addToTree(MyNode<E, G, L, F, H, T> parent, E value, L value1, F value2, H value3, T data) {
+
+
+  /*
+   * Adds new node to tree, comparing values with other nodes to 
+   * deetermine position of node in tree.
+   *
+   * @param     value                  Main value of the new node
+   * @param     value1/value2/value3   optional values of the new node
+   * @param     data                   data stored by new node
+   * @return    node                   reference to added node
+   */
+    private MyNode<E, G, T> addToTree(MyNode<E, G, T> parent, E value, MyArrayList<G> value1, MyArrayList<E> value2, MyArrayList<G> value3, T data) {
         if (parent != null) {
-            MyNode<E, G, L, F, H, T> node;
+            MyNode<E, G, T> node;
             int compare = value.compareTo(parent.getValue());
             if (compare == 0 && value1 != null) {
                 for (int i = 0; i < value1.size(); i++) {
@@ -49,14 +82,14 @@ public class MyBinaryTree<E extends Comparable<E>, G extends Comparable<G>, L ex
                 if (parent.hasLeftChild()) {
                     node = addToTree(parent.getLeft(), value, value1, value2, value3, data);
                 } else {
-                    node = new MyNode<E, G, L, F, H, T>(value, value1, value2, value3, data);
+                    node = new MyNode<E, G, T>(value, value1, value2, value3, data);
                     parent.setLeft(node);
                 }
             } else {
                 if (parent.hasRightChild()) {
                     node = addToTree(parent.getRight(), value, value1, value2, value3, data);
                 } else {
-                    node = new MyNode<E, G, L, F, H, T>(value, value1, value2, value3, data);
+                    node = new MyNode<E, G, T>(value, value1, value2, value3, data);
                     parent.setRight(node);
                 }
             }
@@ -65,16 +98,26 @@ public class MyBinaryTree<E extends Comparable<E>, G extends Comparable<G>, L ex
         return null;
     }
 
-    public T remove(E value, L value1, F value2, H value3) {
-        MyNode<E, G, L, F, H, T> node = getFirstNode(value, value1, value2, value3);
+
+  /*
+   * Checks if node with given values exists, if so, removes it
+   * from tree using binary tree removal technique to ensure that
+   * nodes are still correctly placed.
+   *
+   * @param     value                  Main value of the node
+   * @param     value1/value2/value3   optional values of the node
+   * @return    data                   data stored by node removed
+   */
+    public T remove(E value, MyArrayList<G> value1, MyArrayList<E> value2, MyArrayList<G> value3) {
+        MyNode<E, G, T> node = getFirstNode(value, value1, value2, value3);
         if (node != null) {
             size -= 1;
             int side = node.getSide();
-            MyNode<E, G, L, F, H, T> ptr;
+            MyNode<E, G, T> ptr;
             if (node.hasRightChild()) {
                 ptr = node.getRight();
                 ptr = getLeftest(ptr);
-                MyNode<E, G, L, F, H, T> right = ptr.getRight();
+                MyNode<E, G, T> right = ptr.getRight();
                 if (ptr.getSide() == 1) {
                     ptr.getParent().setLeft(null);
                 } else if (ptr.getSide() == 2) {
@@ -109,37 +152,88 @@ public class MyBinaryTree<E extends Comparable<E>, G extends Comparable<G>, L ex
 
 
         }
-        System.out.println("Nothing to remove?");
         return null;
     }
 
+
+  /*
+   * Removes node with smallest values from tree.
+   *
+   * @return    data                   data stored by node removed
+   */
     public T removeSmallest() {
-        MyNode<E, G, L, F, H, T> smallest = getLeftest(root);
-        return remove(smallest.getValue(), smallest.getValue1(), smallest.getValue2(), smallest.getValue3());
-    }
-    public T removeLargest() {
-        MyNode<E, G, L, F, H, T> largest = getRightest(root);
-        return remove(largest.getValue(), largest.getValue1(), largest.getValue2(), largest.getValue3());
+        if (root != null) {
+            MyNode<E, G, T> smallest = getLeftest(root);
+            return remove(smallest.getValue(), smallest.getValue1(), smallest.getValue2(), smallest.getValue3());    
+        }
+        return null;
     }
 
-    public T getData(E value, L value1, F value2, H value3) {
-        MyNode<E, G, L, F, H, T> ptr = getFirstNode(value, value1, value2, value3);
+  /*
+   * Removes node with largest values from tree.
+   *
+   * @return    data                   data stored by node removed
+   */
+    public T removeLargest() {
+        if (root != null) {
+            MyNode<E, G, T> largest = getRightest(root);
+            return remove(largest.getValue(), largest.getValue1(), largest.getValue2(), largest.getValue3());
+        }
+        return null;
+    }
+
+
+  /*
+   * Checks if node with given values exists, if so, returns
+   * its stored data.
+   *
+   * @param     value                  Main value of the node
+   * @param     value1/value2/value3   optional values of the node
+   * @return    data                   data stored by node
+   */
+    public T getData(E value, MyArrayList<G> value1, MyArrayList<E> value2, MyArrayList<G> value3) {
+        MyNode<E, G, T> ptr = getFirstNode(value, value1, value2, value3);
         return (ptr != null) ? ptr.getData() : null;
     }
-    public T setData(E value, L value1, F value2, H value3, T data) {
-        MyNode<E, G, L, F, H, T> ptr = getFirstNode(value, value1, value2, value3);
+
+  /*
+   * Checks if node with given values exists, if so, sets
+   * its stored data to the given value.
+   *
+   * @param     value                  Main value of the node
+   * @param     value1/value2/value3   optional values of the node
+   * @param     data                   data to be stored by node
+   * @return    data                   past data stored by node
+   */
+    public T setData(E value, MyArrayList<G> value1, MyArrayList<E> value2, MyArrayList<G> value3, T data) {
+        MyNode<E, G, T> ptr = getFirstNode(value, value1, value2, value3);
         if (ptr != null) {
             return ptr.setData(data);
         }
         return null;
     }
 
+
+  /*
+   * Returns amount of nodes in tree (its size).
+   *
+   * @return    size
+   */
     public int size() {
         return size;
     }
 
-    protected MyNode<E, G, L, F, H, T> getFirstNode(E value, L value1, F value2, H value3) {
-        MyNode<E, G, L, F, H, T> ptr = root;
+    
+  /*
+   * Returns first occurence of node with given values, if 
+   * it exists.
+   *
+   * @param     value                  Main value of the node
+   * @param     value1/value2/value3   optional values of the node
+   * @return    node                   reference to found node
+   */
+    protected MyNode<E, G, T> getFirstNode(E value, MyArrayList<G> value1, MyArrayList<E> value2, MyArrayList<G> value3) {
+        MyNode<E, G, T> ptr = root;
         int compare;
         while (ptr != null) {
             compare = value.compareTo(ptr.getValue());
@@ -180,11 +274,29 @@ public class MyBinaryTree<E extends Comparable<E>, G extends Comparable<G>, L ex
         return null;
     }
 
-    public boolean contains(E value, L value1, F value2, H value3) {
+
+  /*
+   * Returns true if node with given values exists in tree.
+   * If not, returns false.
+   *
+   * @param     value                  Main value of the node
+   * @param     value1/value2/value3   optional values of the node
+   * @return    boolean
+   */
+    public boolean contains(E value, MyArrayList<G> value1, MyArrayList<E> value2, MyArrayList<G> value3) {
         return getFirstNode(value, value1, value2, value3) != null;
     }
 
-    public int getIterations(MyNode<E, G, L, F, H, T> node, E value, L value1, F value2, H value3) {
+
+  /*
+   * Returns amount of instances of nodes with given values
+   * in tree.
+   *
+   * @param     value                  Main value of the node
+   * @param     value1/value2/value3   optional values of the node
+   * @return    iterations
+   */
+    public int getIterations(MyNode<E, G, T> node, E value, MyArrayList<G> value1, MyArrayList<E> value2, MyArrayList<G> value3) {
         if (getFirstNode(value, value1, value2, value3) == null) {
             return 0;
         }
@@ -205,12 +317,24 @@ public class MyBinaryTree<E extends Comparable<E>, G extends Comparable<G>, L ex
         return iterations;
     }
 
-    protected MyNode<E, G, L, F, H, T> getRoot() {
+
+  /*
+   * Returns root of the tree, if it exists.
+   *
+   * @return    root
+   */
+    protected MyNode<E, G, T> getRoot() {
         return root;
     }
 
-    protected MyNode<E, G, L, F, H, T> setRoot(MyNode<E, G, L, F, H, T> root) {
-        MyNode<E, G, L, F, H, T> node = this.root;
+  /*
+   * Sets root of tree to given node.
+   *
+   * @param     root    new root of tree
+   * @return    node    old root of tree
+   */
+    protected MyNode<E, G, T> setRoot(MyNode<E, G, T> root) {
+        MyNode<E, G, T> node = this.root;
         this.root = root;
         if (root != null) {
             this.root.removeParent();
@@ -218,36 +342,28 @@ public class MyBinaryTree<E extends Comparable<E>, G extends Comparable<G>, L ex
         return node;
     }
 
-    protected int getHeight(MyNode<E, G, L, F, H, T> node) {
+
+  /*
+   * Returns height of a given node.
+   *
+   * @return    height
+   */
+    protected int getHeight(MyNode<E, G, T> node) {
         if (node == null) {
             return 0;
         } else {
-            /*int height = 0;
-            MyArrayList<MyNode<E, G, L, F, H, T>> node_array= new MyArrayList<MyNode<E, G, L, F, H, T>>();
-            MyArrayList<MyNode<E, G, L, F, H, T>> temp_node_array;
-            node_array.add(node);
-            while (node_array.size() != 0) {
-                height += 1;
-                temp_node_array = new MyArrayList<MyNode<E, G, L, F, H, T>>();
-                for (int i = 0; i < node_array.size(); i++) {
-                    MyNode<E, G, L, F, H, T> left = node_array.get(i).getLeft();
-                    MyNode<E, G, L, F, H, T> right = node_array.get(i).getRight();
-                    if (left != null) {
-                        temp_node_array.add(left);
-                    }
-                    if (right != null) {
-                        temp_node_array.add(right);
-                    }
-                }
-                node_array = temp_node_array;
-            }
-            return height;*/
             return 1 + Math.max(getHeight(node.getLeft()), getHeight(node.getRight()));
         }
     }
 
 
-    public MyNode<E, G, L, F, H, T> getLeftest(MyNode<E, G, L, F, H, T> node) {
+  /*
+   * Returns smallest node that is a child of given node.
+   * If none exists, return given node.
+   *
+   * @return    node
+   */
+    public MyNode<E, G, T> getLeftest(MyNode<E, G, T> node) {
         if (node != null) {
             while (node.hasLeftChild()) {
                 node = node.getLeft();
@@ -256,7 +372,14 @@ public class MyBinaryTree<E extends Comparable<E>, G extends Comparable<G>, L ex
         }
         return null;
     }
-    public MyNode<E, G, L, F, H, T> getRightest(MyNode<E, G, L, F, H, T> node) {
+
+  /*
+   * Returns largest node that is a child of given node.
+   * If none exists, return given node.
+   *
+   * @return    node
+   */
+    public MyNode<E, G, T> getRightest(MyNode<E, G, T> node) {
         if (node != null) {
             while (node.hasRightChild()) {
                 node = node.getRight();
@@ -268,44 +391,53 @@ public class MyBinaryTree<E extends Comparable<E>, G extends Comparable<G>, L ex
 
 
 
+  /*
+   * Returns iterator of tree, from
+   * the smallest to the largest node.
+   *
+   * @return    iterator
+   */
     @Override
     public Iterator<T> iterator() {
         return new MyBinaryTreeIterator();
     }
+
+  /*
+   * Returns reverse-iterator of tree, from
+   * the largest to the smallest node.
+   *
+   * @return    iterator
+   */
     public Iterator<T> flippedIterator() {
         return new MyFlippedBinaryTreeIterator();
     }
 
+    /*
+    * Iterator class for MyBinaryTree
+    */
     class MyBinaryTreeIterator implements Iterator<T> {
 
-        MyNode<E, G, L, F, H, T> ptr = null;
-        MyNode<E, G, L, F, H, T> old_ptr = null;
+        MyNode<E, G, T> ptr = null; // node pointer of current node returned
+        MyNode<E, G, T> old_ptr = null; // node pointer of past node used to access current node
 
+       /*
+        * Returns whether iterator has
+        * next element to return.
+        *
+        * @return    boolean
+        */
         @Override
         public boolean hasNext() {
-            if (ptr == null && getRoot() != null) {
+            if (ptr == null && getRoot() != null) { // hasn't started iteration
                 ptr = getRoot();
                 return true;
-            } else if (ptr == null && getRoot() == null) {
-                System.out.println("root is null, no iteration allowed");
+            } else if (ptr == null && getRoot() == null) { // tree has no nodes
                 return false;
             }
-             /*else if (ptr.hasLeftChild() || ptr.hasRightChild()) {
+            else if (ptr.hasRightChild() || ptr.getSide() == 1) { // larger node exists
                 return true;
-            } else if (ptr.getSide() == 1 && ptr.getParent().hasRightChild()) {
-                return true;
-            } else {
-                MyNode<E, G, L, F, H, T> ptr2 = ptr.getParent();
-                while (ptr2 != null) {
-                    if (ptr2.getSide() == 1) {return true;}
-                    ptr2 = ptr2.getParent();
-                }
-                return false;
-            }*/
-            else if (ptr.hasRightChild() || ptr.getSide() == 1) {
-                return true;
-            } else if (ptr.getSide() == 2) {
-                MyNode<E, G, L, F, H, T> ptr2 = ptr.getParent();
+            } else if (ptr.getSide() == 2) { // go up the tree to search for larger node
+                MyNode<E, G, T> ptr2 = ptr.getParent();
                 while (ptr2 != null) {
                     if (ptr2.getSide() == 1) {
                         return true;
@@ -318,18 +450,23 @@ public class MyBinaryTree<E extends Comparable<E>, G extends Comparable<G>, L ex
             }
         }
 
+       /*
+        * Returns data stored by next node in tree.
+        *
+        * @return    data
+        */
         @Override
         public T next() {
-            MyNode<E, G, L, F, H, T> leftest = getLeftest(ptr);
-            if (ptr != leftest && old_ptr != ptr.getLeft()) {
+            MyNode<E, G, T> leftest = getLeftest(ptr);
+            if (ptr != leftest && old_ptr != ptr.getLeft()) { // find smallest node first, but make sure you haven't iterated through it yet
                 old_ptr = ptr;
                 ptr = leftest;
                 return ptr.getData();
-            } else if (ptr.getSide() == 0 && old_ptr == null) {
+            } else if (ptr.getSide() == 0 && old_ptr == null) { // root has no left node, return root before iterating through right child
                 old_ptr = ptr;
                 return ptr.getData();
             }
-            else if (ptr.hasRightChild()) {
+            else if (ptr.hasRightChild()) { // right child is larger
                 ptr = ptr.getRight();
                 leftest = getLeftest(ptr);
                 if (ptr != leftest) {
@@ -339,11 +476,11 @@ public class MyBinaryTree<E extends Comparable<E>, G extends Comparable<G>, L ex
                 }
                 return ptr.getData();
             }
-            else if (ptr.getSide() == 1) {
+            else if (ptr.getSide() == 1) { // parent is larger
                 old_ptr = ptr;
                 ptr = ptr.getParent();
                 return ptr.getData();
-            } else if (ptr.getSide() == 2) {
+            } else if (ptr.getSide() == 2) { // go up the tree to search for larger node
                 old_ptr = ptr;
                 while (ptr != null) {
                     if (ptr.getSide() == 1) {
@@ -353,45 +490,41 @@ public class MyBinaryTree<E extends Comparable<E>, G extends Comparable<G>, L ex
                     }
                     ptr = ptr.getParent();
                 }
-                System.out.println("Somehow stuck at rightmost");
                 return old_ptr.getData();
             } else {
-                System.out.println("How th did I end up here??");
                 return null;
             }
         }
     }
 
+
+    /*
+    * Reverse-Iterator class for MyBinaryTree
+    */
     class MyFlippedBinaryTreeIterator implements Iterator<T> {
 
-        MyNode<E, G, L, F, H, T> ptr = null;
-        MyNode<E, G, L, F, H, T> old_ptr = null;
+        MyNode<E, G, T> ptr = null;
+        MyNode<E, G, T> old_ptr = null;
 
+
+       /*
+        * Returns whether iterator has
+        * next element to return.
+        *
+        * @return    boolean
+        */
         @Override
         public boolean hasNext() {
             if (ptr == null && getRoot() != null) {
                 ptr = getRoot();
                 return true;
             } else if (ptr == null && getRoot() == null) {
-                System.out.println("root is null, no iteration allowed");
                 return false;
             }
-             /*else if (ptr.hasLeftChild() || ptr.hasRightChild()) {
-                return true;
-            } else if (ptr.getSide() == 1 && ptr.getParent().hasRightChild()) {
-                return true;
-            } else {
-                MyNode<E, G, L, F, H, T> ptr2 = ptr.getParent();
-                while (ptr2 != null) {
-                    if (ptr2.getSide() == 1) {return true;}
-                    ptr2 = ptr2.getParent();
-                }
-                return false;
-            }*/
             else if (ptr.hasLeftChild() || ptr.getSide() == 2) {
                 return true;
             } else if (ptr.getSide() == 1) {
-                MyNode<E, G, L, F, H, T> ptr2 = ptr.getParent();
+                MyNode<E, G, T> ptr2 = ptr.getParent();
                 while (ptr2 != null) {
                     if (ptr2.getSide() == 2) {
                         return true;
@@ -404,9 +537,14 @@ public class MyBinaryTree<E extends Comparable<E>, G extends Comparable<G>, L ex
             }
         }
 
+       /*
+        * Returns data stored by next node in tree.
+        *
+        * @return    data
+        */
         @Override
         public T next() {
-            MyNode<E, G, L, F, H, T> rightest = getRightest(ptr);
+            MyNode<E, G, T> rightest = getRightest(ptr);
             if (ptr != rightest && old_ptr != ptr.getRight()) {
                 old_ptr = ptr;
                 ptr = rightest;
@@ -439,10 +577,8 @@ public class MyBinaryTree<E extends Comparable<E>, G extends Comparable<G>, L ex
                     }
                     ptr = ptr.getParent();
                 }
-                System.out.println("Somehow stuck at rightmost");
                 return old_ptr.getData();
             } else {
-                System.out.println("How th did I end up here??");
                 return null;
             }
         }
